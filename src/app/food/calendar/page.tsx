@@ -27,7 +27,6 @@ import {
   endOfISOWeek,
 } from 'date-fns'
 import { useAppStore } from '@/store/app-store'
-import { db } from '@/lib/local-db'
 import { Card, CardContent } from '@/components/ui/card'
 import PageHeader from '@/components/layout/page-header'
 import { Badge } from '@/components/ui/badge'
@@ -131,18 +130,21 @@ export default function FoodCalendarPage() {
     const endDate = format(calendarDays[calendarDays.length - 1], 'yyyy-MM-dd')
 
     try {
-      const rawData = db.getFoodByDateRange(startDate, endDate)
+      const res = await fetch(`/api/data/food?start=${startDate}&end=${endDate}`)
+      if (!res.ok) throw new Error('Failed to fetch')
+      const json = await res.json()
+      const rawData: FoodEntry[] = json.data ?? []
 
       const summaries: Record<string, DaySummary> = {}
 
-      for (const raw of rawData || []) {
-        const entry = raw as unknown as FoodEntry
-        const key = entry.date as string
+      for (const entry of rawData) {
+        // Normalize date from Postgres ISO format
+        const key = entry.date.length > 10 ? entry.date.slice(0, 10) : entry.date
         if (!summaries[key]) {
           summaries[key] = { date: key, totalCalories: 0, entries: [] }
         }
         summaries[key].totalCalories += Number(entry.calories) || 0
-        summaries[key].entries.push(entry)
+        summaries[key].entries.push({ ...entry, date: key })
       }
 
       setDaySummaries(summaries)
