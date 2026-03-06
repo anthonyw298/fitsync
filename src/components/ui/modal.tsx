@@ -153,12 +153,13 @@ const Modal: React.FC<ModalProps> = ({
 
             {/* Scrollable body – NOT a child of the touch-action:none backdrop */}
             <div
-              className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 pb-8"
+              className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 pt-5"
               style={{ WebkitOverflowScrolling: "touch" }}
             >
-              <div className="pb-[env(safe-area-inset-bottom,0px)]">
-                {children}
-              </div>
+              {children}
+              {/* Extra space so last button is never stuck behind screen edge */}
+              <div className="h-12" />
+              <div className="h-[env(safe-area-inset-bottom,0px)]" />
             </div>
           </motion.div>
         </>

@@ -472,6 +472,71 @@ export async function getChatHistory(userId: string, limit: number = 50): Promis
   return (rows as ChatMessage[]).reverse();
 }
 
+// ─── Calendar Summary ───────────────────────────────────────────────────────
+
+export interface DaySummary {
+  date: string
+  workout: number   // 0 = none, 1 = completed
+  food: number      // 0-1 ratio of calories hit vs target
+  sleep: number     // 0-1 ratio of hours vs 8h target
+  supplements: number // 0-1 ratio of taken vs total
+}
+
+export async function getCalendarSummary(
+  userId: string,
+  startDate: string,
+  endDate: string,
+  profile?: { daily_calories?: number } | null
+): Promise<DaySummary[]> {
+  const sql = getClient();
+
+  // Fetch all data for range in parallel
+  const [workouts, food, sleep, supps, suppLogs] = await Promise.all([
+    sql`SELECT date, completed FROM workout_logs WHERE user_id = ${userId} AND date >= ${startDate} AND date <= ${endDate}`,
+    sql`SELECT date, SUM(calories) as total_cal, SUM(protein_g) as total_protein FROM food_entries WHERE user_id = ${userId} AND date >= ${startDate} AND date <= ${endDate} GROUP BY date`,
+    sql`SELECT date, duration_hours, quality FROM sleep_logs WHERE user_id = ${userId} AND date >= ${startDate} AND date <= ${endDate}`,
+    sql`SELECT id FROM supplements WHERE user_id = ${userId} AND active = true`,
+    sql`SELECT date, supplement_id, taken FROM supplement_logs WHERE user_id = ${userId} AND date >= ${startDate} AND date <= ${endDate}`,
+  ]);
+
+  const targetCal = profile?.daily_calories ?? 2500;
+  const totalSupps = supps.length;
+
+  // Build lookup maps
+  const workoutMap = new Map<string, boolean>();
+  for (const w of workouts) workoutMap.set(String(w.date), !!w.completed);
+
+  const foodMap = new Map<string, number>();
+  for (const f of food) foodMap.set(String(f.date), Number(f.total_cal) || 0);
+
+  const sleepMap = new Map<string, number>();
+  for (const s of sleep) sleepMap.set(String(s.date), Number(s.duration_hours) || 0);
+
+  const suppMap = new Map<string, number>();
+  for (const l of suppLogs) {
+    if (l.taken) {
+      const d = String(l.date);
+      suppMap.set(d, (suppMap.get(d) ?? 0) + 1);
+    }
+  }
+
+  // Generate all dates in range
+  const results: DaySummary[] = [];
+  const start = new Date(startDate + 'T00:00:00');
+  const end = new Date(endDate + 'T00:00:00');
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const ds = d.toISOString().split('T')[0];
+    results.push({
+      date: ds,
+      workout: workoutMap.has(ds) ? 1 : 0,
+      food: Math.min(1, (foodMap.get(ds) ?? 0) / targetCal),
+      sleep: Math.min(1, (sleepMap.get(ds) ?? 0) / 8),
+      supplements: totalSupps > 0 ? Math.min(1, (suppMap.get(ds) ?? 0) / totalSupps) : 0,
+    });
+  }
+  return results;
+}
+
 export async function addChatMessage(
   userId: string,
   msg: Omit<ChatMessage, "id" | "user_id" | "created_at">

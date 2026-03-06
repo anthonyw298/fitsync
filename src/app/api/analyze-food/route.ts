@@ -138,15 +138,23 @@ export async function POST(request: NextRequest) {
     let mimeType: string;
 
     if (image.startsWith("data:")) {
-      const match = image.match(/^data:(image\/\w+);base64,(.+)$/);
+      const match = image.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
       if (!match) {
-        return NextResponse.json(
-          { error: "Invalid data URL format" },
-          { status: 400 }
-        );
+        // Fallback: just strip the prefix and assume JPEG
+        const commaIdx = image.indexOf(",");
+        if (commaIdx > 0) {
+          mimeType = "image/jpeg";
+          base64Data = image.slice(commaIdx + 1);
+        } else {
+          return NextResponse.json(
+            { error: "Invalid data URL format" },
+            { status: 400 }
+          );
+        }
+      } else {
+        mimeType = match[1];
+        base64Data = match[2];
       }
-      mimeType = match[1];
-      base64Data = match[2];
     } else {
       base64Data = image;
       mimeType = inferMimeType(base64Data);
