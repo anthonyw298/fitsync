@@ -8,6 +8,7 @@ import {
   UtensilsCrossed,
   Dumbbell,
   Moon,
+  CalendarDays,
   MessageCircle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -19,10 +20,11 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: "Dashboard", icon: Home, path: "/" },
+  { label: "Home", icon: Home, path: "/" },
   { label: "Food", icon: UtensilsCrossed, path: "/food" },
   { label: "Workout", icon: Dumbbell, path: "/workout" },
   { label: "Sleep", icon: Moon, path: "/sleep" },
+  { label: "Calendar", icon: CalendarDays, path: "/calendar" },
   { label: "Chat", icon: MessageCircle, path: "/chat" },
 ];
 
@@ -40,7 +42,7 @@ export default function BottomNav() {
       {/* Top edge gradient line */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#A78BFA]/20 to-transparent" />
 
-      <div className="mx-auto flex h-[70px] max-w-lg items-center justify-around px-2">
+      <div className="mx-auto flex h-[70px] max-w-lg items-center justify-around px-1">
         {navItems.map((item) => {
           const isActive =
             item.path === "/"
