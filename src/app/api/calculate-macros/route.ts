@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 interface MacroInput {
   age: number;
   height_in: number;
-  weight_lbs: number;
+  weight_kg: number;
   gender: "male" | "female";
   activity_level: "sedentary" | "light" | "moderate" | "active" | "very_active";
   fitness_goal: "cut" | "maintain" | "bulk";
@@ -37,15 +37,13 @@ const GOAL_ADJUSTMENTS: Record<MacroInput["fitness_goal"], number> = {
 /**
  * Mifflin-St Jeor Equation for Basal Metabolic Rate
  *
- * Converts imperial inputs internally:
- *   weight_kg = weight_lbs * 0.453592
+ * Weight already in kg, convert height from inches to cm:
  *   height_cm = height_in * 2.54
  *
  * Male:   BMR = (10 * weight_kg) + (6.25 * height_cm) - (5 * age) + 5
  * Female: BMR = (10 * weight_kg) + (6.25 * height_cm) - (5 * age) - 161
  */
-function calculateBMR(weight_lbs: number, height_in: number, age: number, gender: string): number {
-  const weight_kg = weight_lbs * 0.453592;
+function calculateBMR(weight_kg: number, height_in: number, age: number, gender: string): number {
   const height_cm = height_in * 2.54;
   const base = 10 * weight_kg + 6.25 * height_cm - 5 * age;
   return gender === "female" ? base - 161 : base + 5;
@@ -53,7 +51,7 @@ function calculateBMR(weight_lbs: number, height_in: number, age: number, gender
 
 function calculateMacros(input: MacroInput): MacroResult {
   // Step 1: BMR via Mifflin-St Jeor
-  const bmr = calculateBMR(input.weight_lbs, input.height_in, input.age, input.gender);
+  const bmr = calculateBMR(input.weight_kg, input.height_in, input.age, input.gender);
 
   // Step 2: TDEE = BMR * activity multiplier
   const activityMultiplier = ACTIVITY_MULTIPLIERS[input.activity_level] ?? 1.55;
@@ -71,8 +69,8 @@ function calculateMacros(input: MacroInput): MacroResult {
   }
 
   // Step 5: Calculate macro split
-  // Protein: 1g per lb body weight
-  const protein = Math.round(input.weight_lbs * 1);
+  // Protein: 2.2g per kg body weight (~1g per lb)
+  const protein = Math.round(input.weight_kg * 2.2);
   const proteinCalories = protein * 4;
 
   // Fats: 25% of total calories
@@ -97,7 +95,7 @@ function calculateMacros(input: MacroInput): MacroResult {
 }
 
 function validateInput(body: Record<string, unknown>): { valid: true; data: MacroInput } | { valid: false; error: string } {
-  const requiredFields = ["age", "height_in", "weight_lbs", "gender", "activity_level", "fitness_goal"];
+  const requiredFields = ["age", "height_in", "weight_kg", "gender", "activity_level", "fitness_goal"];
   const missing = requiredFields.filter((f) => body[f] === undefined || body[f] === null);
 
   if (missing.length > 0) {
@@ -114,9 +112,9 @@ function validateInput(body: Record<string, unknown>): { valid: true; data: Macr
     return { valid: false, error: "height_in must be a number between 48 and 96 inches" };
   }
 
-  const weight_lbs = Number(body.weight_lbs);
-  if (!Number.isFinite(weight_lbs) || weight_lbs < 60 || weight_lbs > 700) {
-    return { valid: false, error: "weight_lbs must be a number between 60 and 700 lbs" };
+  const weight_kg = Number(body.weight_kg);
+  if (!Number.isFinite(weight_kg) || weight_kg < 30 || weight_kg > 300) {
+    return { valid: false, error: "weight_kg must be a number between 30 and 300 kg" };
   }
 
   const gender = String(body.gender).toLowerCase();
@@ -154,7 +152,7 @@ function validateInput(body: Record<string, unknown>): { valid: true; data: Macr
     data: {
       age,
       height_in,
-      weight_lbs,
+      weight_kg,
       gender: gender as "male" | "female",
       activity_level: activity_level as MacroInput["activity_level"],
       fitness_goal: fitness_goal as MacroInput["fitness_goal"],

@@ -5,9 +5,9 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export interface ProgressBarProps {
-  /** Current value (0–100). */
+  /** Current value (0-100). */
   value: number;
-  /** Fill color — any valid CSS color string. Defaults to violet. */
+  /** Fill color -- any valid CSS color string. Defaults to violet. */
   color?: string;
   /** Optional label displayed to the left of the bar. */
   label?: string;
@@ -27,7 +27,7 @@ const heightMap: Record<string, string> = {
 
 const ProgressBar: React.FC<ProgressBarProps> = ({
   value,
-  color = "#8B5CF6",
+  color = "#A78BFA",
   label,
   showPercentage = false,
   height = "md",
@@ -41,10 +41,10 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
       {(label || showPercentage) && (
         <div className="flex items-center justify-between text-xs">
           {label && (
-            <span className="font-medium text-[#F1F1F3]">{label}</span>
+            <span className="font-medium text-[#EAEAF0]">{label}</span>
           )}
           {showPercentage && (
-            <span className="tabular-nums text-[#8888A0]">
+            <span className="tabular-nums text-[#6B6B8A]">
               {Math.round(clamped)}%
             </span>
           )}
@@ -54,14 +54,17 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
       {/* Track */}
       <div
         className={cn(
-          "w-full overflow-hidden rounded-full bg-[#1E1E2E]",
+          "w-full overflow-hidden rounded-full bg-white/[0.06]",
           heightMap[height]
         )}
       >
         {/* Animated fill */}
         <motion.div
           className={cn("h-full rounded-full", heightMap[height])}
-          style={{ backgroundColor: color }}
+          style={{
+            background: `linear-gradient(90deg, ${color}, ${color}dd)`,
+            boxShadow: `0 0 12px ${color}30`,
+          }}
           initial={{ width: 0 }}
           animate={{ width: `${clamped}%` }}
           transition={{ type: "spring", stiffness: 80, damping: 18 }}

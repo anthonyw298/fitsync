@@ -50,7 +50,7 @@ const Tabs: React.FC<TabsProps> = ({
       ref={containerRef}
       className={cn(
         "flex w-full gap-1 overflow-x-auto scrollbar-none",
-        "border-b border-[#1E1E2E]",
+        "border-b border-white/[0.06]",
         className
       )}
       role="tablist"
@@ -68,12 +68,12 @@ const Tabs: React.FC<TabsProps> = ({
             onClick={() => onChange(tab.id)}
             className={cn(
               "relative flex shrink-0 items-center gap-1.5 px-4 py-2.5 text-sm font-medium",
-              "transition-colors duration-200",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6] focus-visible:ring-offset-1 focus-visible:ring-offset-[#0A0A0F]",
+              "transition-all duration-250",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A78BFA] focus-visible:ring-offset-1 focus-visible:ring-offset-[#06060C]",
               "rounded-t-lg",
               isActive
-                ? "text-[#F1F1F3]"
-                : "text-[#8888A0] hover:text-[#F1F1F3]/80"
+                ? "text-[#EAEAF0]"
+                : "text-[#6B6B8A] hover:text-[#EAEAF0]/80"
             )}
           >
             {Icon && <Icon className="h-4 w-4" />}
@@ -83,7 +83,7 @@ const Tabs: React.FC<TabsProps> = ({
             {isActive && (
               <motion.div
                 layoutId="tab-indicator"
-                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-[#8B5CF6]"
+                className="absolute bottom-0 left-1 right-1 h-0.5 rounded-full bg-gradient-to-r from-[#A78BFA] to-[#38BDF8]"
                 transition={{ type: "spring", stiffness: 380, damping: 30 }}
               />
             )}

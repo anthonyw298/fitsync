@@ -39,9 +39,9 @@ import type { SleepLog } from '@/lib/database.types'
 /* ------------------------------------------------------------------ */
 
 function qualityColor(q: number): string {
-  if (q >= 4) return '#10B981'
-  if (q === 3) return '#F59E0B'
-  return '#EF4444'
+  if (q >= 4) return '#34D399'
+  if (q === 3) return '#FBBF24'
+  return '#F87171'
 }
 
 function qualityLabel(q: number): string {
@@ -102,8 +102,8 @@ function StarRating({
           <Star
             className={`${sizeClasses[size]} ${
               star <= value
-                ? 'fill-[#F59E0B] text-[#F59E0B]'
-                : 'fill-none text-[#1E1E2E]'
+                ? 'fill-[#FBBF24] text-[#FBBF24]'
+                : 'fill-none text-white/[0.06]'
             }`}
           />
         </button>
@@ -127,9 +127,9 @@ function DurationTooltip({
 }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border border-[#1E1E2E] bg-[#13131A] px-3 py-2 shadow-lg">
-      <p className="text-xs text-[#8888A0]">{label}</p>
-      <p className="text-sm font-semibold text-[#3B82F6]">
+    <div className="rounded-lg border border-white/[0.06] bg-[#0E0E18] px-3 py-2 shadow-lg">
+      <p className="text-xs text-[#6B6B8A]">{label}</p>
+      <p className="text-sm font-semibold text-[#38BDF8]">
         {formatHours(payload[0].value)}
       </p>
     </div>
@@ -147,8 +147,8 @@ function QualityTooltip({
 }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border border-[#1E1E2E] bg-[#13131A] px-3 py-2 shadow-lg">
-      <p className="text-xs text-[#8888A0]">{label}</p>
+    <div className="rounded-lg border border-white/[0.06] bg-[#0E0E18] px-3 py-2 shadow-lg">
+      <p className="text-xs text-[#6B6B8A]">{label}</p>
       <p className="text-sm font-semibold" style={{ color: payload[0].payload.fill }}>
         {payload[0].value}/5 — {qualityLabel(payload[0].value)}
       </p>
@@ -199,7 +199,7 @@ export default function SleepPage() {
         label,
         duration: log?.duration_hours ?? 0,
         quality: log?.quality ?? 0,
-        fill: log ? qualityColor(log.quality) : '#1E1E2E',
+        fill: log ? qualityColor(log.quality) : 'rgba(255,255,255,0.06)',
       })
     }
     return days
@@ -291,7 +291,7 @@ export default function SleepPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] pb-28">
+    <div className="min-h-screen bg-transparent pb-28">
       <PageHeader
         title="Sleep"
         subtitle="Track & optimize your rest"
@@ -310,33 +310,33 @@ export default function SleepPage() {
           <Card
             className="border-l-4"
             style={{
-              borderLeftColor: lastNight ? qualityColor(lastNight.quality) : '#1E1E2E',
+              borderLeftColor: lastNight ? qualityColor(lastNight.quality) : 'rgba(255,255,255,0.06)',
             }}
           >
             <CardContent>
               {lastNight ? (
                 <div className="flex items-start justify-between">
                   <div className="flex flex-col gap-2">
-                    <p className="text-xs font-medium uppercase tracking-wider text-[#8888A0]">
+                    <p className="text-xs font-medium uppercase tracking-wider text-[#6B6B8A]">
                       Last Night
                     </p>
-                    <p className="text-4xl font-bold tabular-nums text-[#F1F1F3]">
+                    <p className="text-4xl font-bold tabular-nums text-[#EAEAF0]">
                       {formatHours(lastNight.duration_hours)}
                     </p>
                     <StarRating value={lastNight.quality} readOnly size="sm" />
-                    <div className="mt-1 flex items-center gap-4 text-xs text-[#8888A0]">
+                    <div className="mt-1 flex items-center gap-4 text-xs text-[#6B6B8A]">
                       <span className="flex items-center gap-1">
-                        <Moon className="h-3 w-3 text-[#8B5CF6]" />
+                        <Moon className="h-3 w-3 text-[#A78BFA]" />
                         {lastNight.bedtime}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Sun className="h-3 w-3 text-[#F59E0B]" />
+                        <Sun className="h-3 w-3 text-[#FBBF24]" />
                         {lastNight.wake_time}
                       </span>
                     </div>
                   </div>
                   <div
-                    className="flex h-14 w-14 items-center justify-center rounded-2xl"
+                    className="flex h-14 w-14 items-center justify-center rounded-2xl shadow-[0_0_20px_rgba(129,140,248,0.15)]"
                     style={{
                       backgroundColor: `${qualityColor(lastNight.quality)}15`,
                     }}
@@ -349,8 +349,8 @@ export default function SleepPage() {
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-3 py-4">
-                  <Moon className="h-10 w-10 text-[#8888A0]" />
-                  <p className="text-sm text-[#8888A0]">No sleep data yet</p>
+                  <Moon className="h-10 w-10 text-[#6B6B8A]" />
+                  <p className="text-sm text-[#6B6B8A]">No sleep data yet</p>
                   <Button size="sm" onClick={() => setShowForm(true)}>
                     Log Your First Night
                   </Button>
@@ -371,43 +371,43 @@ export default function SleepPage() {
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <Card className="border-[#8B5CF6]/20">
+              <Card className="border-[#818CF8]/30 glow-primary">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Moon className="h-4 w-4 text-[#8B5CF6]" />
+                    <Moon className="h-4 w-4 text-[#A78BFA]" />
                     Log Sleep
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-medium text-[#8888A0]">
+                      <label className="text-xs font-medium text-[#6B6B8A]">
                         Bedtime
                       </label>
                       <input
                         type="time"
                         value={bedtime}
                         onChange={(e) => setBedtime(e.target.value)}
-                        className="flex h-10 w-full rounded-xl border border-[#1E1E2E] bg-[#13131A] px-3 py-2 text-sm text-[#F1F1F3] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50 [color-scheme:dark]"
+                        className="flex h-10 w-full rounded-xl border border-white/[0.06] bg-[#0E0E18] px-3 py-2 text-sm text-[#EAEAF0] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A78BFA]/50 [color-scheme:dark]"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-medium text-[#8888A0]">
+                      <label className="text-xs font-medium text-[#6B6B8A]">
                         Wake Time
                       </label>
                       <input
                         type="time"
                         value={wakeTime}
                         onChange={(e) => setWakeTime(e.target.value)}
-                        className="flex h-10 w-full rounded-xl border border-[#1E1E2E] bg-[#13131A] px-3 py-2 text-sm text-[#F1F1F3] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50 [color-scheme:dark]"
+                        className="flex h-10 w-full rounded-xl border border-white/[0.06] bg-[#0E0E18] px-3 py-2 text-sm text-[#EAEAF0] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A78BFA]/50 [color-scheme:dark]"
                       />
                     </div>
                   </div>
 
                   {/* Duration preview */}
-                  <div className="flex items-center justify-center gap-2 rounded-xl bg-[#0A0A0F] py-3">
-                    <Clock className="h-4 w-4 text-[#3B82F6]" />
-                    <span className="text-lg font-semibold text-[#F1F1F3]">
+                  <div className="flex items-center justify-center gap-2 rounded-xl bg-transparent py-3">
+                    <Clock className="h-4 w-4 text-[#38BDF8]" />
+                    <span className="text-lg font-semibold text-[#EAEAF0]">
                       {formatHours(duration)}
                     </span>
                     <Badge variant={duration >= 7 ? 'success' : duration >= 6 ? 'warning' : 'danger'}>
@@ -417,7 +417,7 @@ export default function SleepPage() {
 
                   {/* Quality rating */}
                   <div className="flex flex-col items-center gap-2">
-                    <label className="text-xs font-medium text-[#8888A0]">
+                    <label className="text-xs font-medium text-[#6B6B8A]">
                       Sleep Quality
                     </label>
                     <StarRating
@@ -467,20 +467,20 @@ export default function SleepPage() {
             <Card
               className={`border-l-4 ${
                 alert.type === 'warning'
-                  ? 'border-l-[#EF4444] bg-[#EF4444]/5'
-                  : 'border-l-[#F59E0B] bg-[#F59E0B]/5'
+                  ? 'border-l-[#F87171] bg-[#F87171]/5'
+                  : 'border-l-[#FBBF24] bg-[#FBBF24]/5'
               }`}
             >
               <CardContent>
                 <div className="flex items-start gap-3">
                   <AlertTriangle
                     className={`mt-0.5 h-5 w-5 flex-shrink-0 ${
-                      alert.type === 'warning' ? 'text-[#EF4444]' : 'text-[#F59E0B]'
+                      alert.type === 'warning' ? 'text-[#F87171]' : 'text-[#FBBF24]'
                     }`}
                   />
                   <div>
-                    <p className="text-sm font-semibold text-[#F1F1F3]">{alert.title}</p>
-                    <p className="mt-1 text-xs leading-relaxed text-[#8888A0]">
+                    <p className="text-sm font-semibold text-[#EAEAF0]">{alert.title}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-[#6B6B8A]">
                       {alert.message}
                     </p>
                   </div>
@@ -498,10 +498,10 @@ export default function SleepPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
         >
-          <Card>
+          <Card className="gradient-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-[#3B82F6]" />
+                <TrendingUp className="h-4 w-4 text-[#38BDF8]" />
                 Sleep Duration
               </CardTitle>
             </CardHeader>
@@ -516,25 +516,25 @@ export default function SleepPage() {
                       dataKey="label"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#8888A0', fontSize: 10 }}
+                      tick={{ fill: '#6B6B8A', fontSize: 10 }}
                       interval="preserveStartEnd"
                     />
                     <YAxis
                       domain={[0, 12]}
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#8888A0', fontSize: 10 }}
+                      tick={{ fill: '#6B6B8A', fontSize: 10 }}
                       width={35}
                       tickFormatter={(v: number) => `${v}h`}
                     />
                     <ReferenceLine
                       y={7}
-                      stroke="#8888A0"
+                      stroke="#6B6B8A"
                       strokeDasharray="4 4"
                       strokeOpacity={0.4}
                       label={{
                         value: '7h goal',
-                        fill: '#8888A0',
+                        fill: '#6B6B8A',
                         fontSize: 10,
                         position: 'right',
                       }}
@@ -543,10 +543,10 @@ export default function SleepPage() {
                     <Line
                       type="monotone"
                       dataKey="duration"
-                      stroke="#3B82F6"
+                      stroke="#38BDF8"
                       strokeWidth={2.5}
-                      dot={{ fill: '#3B82F6', r: 3, strokeWidth: 0 }}
-                      activeDot={{ fill: '#3B82F6', r: 5, strokeWidth: 2, stroke: '#13131A' }}
+                      dot={{ fill: '#38BDF8', r: 3, strokeWidth: 0 }}
+                      activeDot={{ fill: '#38BDF8', r: 5, strokeWidth: 2, stroke: '#0E0E18' }}
                       animationDuration={800}
                     />
                   </LineChart>
@@ -564,10 +564,10 @@ export default function SleepPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card>
+          <Card className="gradient-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-[#F59E0B]" />
+                <Star className="h-4 w-4 text-[#FBBF24]" />
                 Sleep Quality
               </CardTitle>
             </CardHeader>
@@ -583,7 +583,7 @@ export default function SleepPage() {
                       dataKey="label"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#8888A0', fontSize: 10 }}
+                      tick={{ fill: '#6B6B8A', fontSize: 10 }}
                       interval="preserveStartEnd"
                     />
                     <YAxis
@@ -591,7 +591,7 @@ export default function SleepPage() {
                       ticks={[1, 2, 3, 4, 5]}
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#8888A0', fontSize: 10 }}
+                      tick={{ fill: '#6B6B8A', fontSize: 10 }}
                       width={25}
                     />
                     <Tooltip content={<QualityTooltip />} cursor={false} />
@@ -628,91 +628,91 @@ export default function SleepPage() {
             <CardContent className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-4">
                 {/* Avg Duration */}
-                <div className="rounded-xl border border-[#1E1E2E] bg-[#0A0A0F] p-4">
+                <div className="glass-subtle rounded-xl border border-white/[0.06] p-4">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-[#3B82F6]" />
-                    <span className="text-[10px] uppercase tracking-wider text-[#8888A0]">
+                    <Clock className="h-4 w-4 text-[#38BDF8]" />
+                    <span className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">
                       Avg Duration
                     </span>
                   </div>
-                  <p className="mt-2 text-2xl font-bold tabular-nums text-[#F1F1F3]">
+                  <p className="mt-2 text-2xl font-bold tabular-nums text-[#EAEAF0]">
                     {stats.avgDuration > 0 ? formatHours(stats.avgDuration) : '--'}
                   </p>
                   <ProgressBar
                     value={stats.avgDuration > 0 ? (stats.avgDuration / 9) * 100 : 0}
-                    color="#3B82F6"
+                    color="#38BDF8"
                     height="sm"
                     className="mt-2"
                   />
                 </div>
 
                 {/* Avg Quality */}
-                <div className="rounded-xl border border-[#1E1E2E] bg-[#0A0A0F] p-4">
+                <div className="glass-subtle rounded-xl border border-white/[0.06] p-4">
                   <div className="flex items-center gap-2">
-                    <Star className="h-4 w-4 text-[#F59E0B]" />
-                    <span className="text-[10px] uppercase tracking-wider text-[#8888A0]">
+                    <Star className="h-4 w-4 text-[#FBBF24]" />
+                    <span className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">
                       Avg Quality
                     </span>
                   </div>
-                  <p className="mt-2 text-2xl font-bold tabular-nums text-[#F1F1F3]">
+                  <p className="mt-2 text-2xl font-bold tabular-nums text-[#EAEAF0]">
                     {stats.avgQuality > 0 ? `${stats.avgQuality}/5` : '--'}
                   </p>
                   <ProgressBar
                     value={stats.avgQuality > 0 ? (stats.avgQuality / 5) * 100 : 0}
-                    color="#F59E0B"
+                    color="#FBBF24"
                     height="sm"
                     className="mt-2"
                   />
                 </div>
 
                 {/* Best Night */}
-                <div className="rounded-xl border border-[#1E1E2E] bg-[#0A0A0F] p-4">
+                <div className="glass-subtle rounded-xl border border-white/[0.06] p-4">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-[#10B981]" />
-                    <span className="text-[10px] uppercase tracking-wider text-[#8888A0]">
+                    <TrendingUp className="h-4 w-4 text-[#34D399]" />
+                    <span className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">
                       Best Night
                     </span>
                   </div>
                   {stats.bestNight ? (
                     <>
-                      <p className="mt-2 text-xl font-bold text-[#10B981]">
+                      <p className="mt-2 text-xl font-bold text-[#34D399]">
                         {formatHours(stats.bestNight.duration_hours)}
                       </p>
-                      <p className="text-[10px] text-[#8888A0]">
+                      <p className="text-[10px] text-[#6B6B8A]">
                         {format(new Date(stats.bestNight.date + 'T00:00:00'), 'MMM d')}
                       </p>
                     </>
                   ) : (
-                    <p className="mt-2 text-xl font-bold text-[#8888A0]">--</p>
+                    <p className="mt-2 text-xl font-bold text-[#6B6B8A]">--</p>
                   )}
                 </div>
 
                 {/* Worst Night */}
-                <div className="rounded-xl border border-[#1E1E2E] bg-[#0A0A0F] p-4">
+                <div className="glass-subtle rounded-xl border border-white/[0.06] p-4">
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-[#EF4444]" />
-                    <span className="text-[10px] uppercase tracking-wider text-[#8888A0]">
+                    <AlertTriangle className="h-4 w-4 text-[#F87171]" />
+                    <span className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">
                       Worst Night
                     </span>
                   </div>
                   {stats.worstNight ? (
                     <>
-                      <p className="mt-2 text-xl font-bold text-[#EF4444]">
+                      <p className="mt-2 text-xl font-bold text-[#F87171]">
                         {formatHours(stats.worstNight.duration_hours)}
                       </p>
-                      <p className="text-[10px] text-[#8888A0]">
+                      <p className="text-[10px] text-[#6B6B8A]">
                         {format(new Date(stats.worstNight.date + 'T00:00:00'), 'MMM d')}
                       </p>
                     </>
                   ) : (
-                    <p className="mt-2 text-xl font-bold text-[#8888A0]">--</p>
+                    <p className="mt-2 text-xl font-bold text-[#6B6B8A]">--</p>
                   )}
                 </div>
               </div>
 
               {/* Total nights logged */}
-              <div className="flex items-center justify-between rounded-xl bg-[#0A0A0F] px-4 py-3">
-                <span className="text-xs text-[#8888A0]">Nights tracked (30 days)</span>
+              <div className="flex items-center justify-between rounded-xl bg-transparent px-4 py-3">
+                <span className="text-xs text-[#6B6B8A]">Nights tracked (30 days)</span>
                 <Badge>
                   {recentSleep.length} / 30
                 </Badge>

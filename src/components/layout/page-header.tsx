@@ -15,16 +15,19 @@ export default function PageHeader({
 }: PageHeaderProps) {
   return (
     <header
-      className="sticky top-0 z-40 border-b border-[#1E1E2E] bg-[#0A0A0F]/90 backdrop-blur-lg"
+      className="sticky top-0 z-40 glass-dense"
       style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
+      {/* Bottom edge gradient line */}
+      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+
       <div className="flex h-14 items-center justify-between px-4">
         <div className="flex min-w-0 flex-col">
-          <h1 className="truncate text-lg font-semibold leading-tight text-[#F1F1F3]">
+          <h1 className="font-display truncate text-lg font-semibold leading-tight text-[#EAEAF0]">
             {title}
           </h1>
           {subtitle && (
-            <p className="truncate text-xs leading-tight text-[#8888A0]">
+            <p className="truncate text-xs leading-tight text-[#6B6B8A]">
               {subtitle}
             </p>
           )}

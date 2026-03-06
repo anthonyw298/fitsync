@@ -71,6 +71,51 @@ export const db = {
     setTable('food_entries', all.filter((e) => e.id !== id))
   },
 
+  updateFood: (id: string, updates: Record<string, unknown>) => {
+    const all = getTable<Record<string, unknown>>('food_entries')
+    const idx = all.findIndex((e) => e.id === id)
+    if (idx >= 0) {
+      all[idx] = { ...all[idx], ...updates }
+      setTable('food_entries', all)
+      return all[idx]
+    }
+    return null
+  },
+
+  getRecentFoods: (limit = 20) => {
+    const all = getTable<Record<string, unknown>>('food_entries')
+    const seen = new Set<string>()
+    const recent: Record<string, unknown>[] = []
+    const sorted = [...all].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+    for (const entry of sorted) {
+      const name = String(entry.food_name).toLowerCase()
+      if (!seen.has(name)) {
+        seen.add(name)
+        recent.push(entry)
+        if (recent.length >= limit) break
+      }
+    }
+    return recent
+  },
+
+  getFrequentFoods: (limit = 20) => {
+    const all = getTable<Record<string, unknown>>('food_entries')
+    const counts = new Map<string, { count: number; entry: Record<string, unknown> }>()
+    for (const entry of all) {
+      const name = String(entry.food_name).toLowerCase()
+      const existing = counts.get(name)
+      if (existing) {
+        existing.count++
+      } else {
+        counts.set(name, { count: 1, entry })
+      }
+    }
+    return Array.from(counts.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit)
+      .map((c) => ({ ...c.entry, _frequency: c.count }))
+  },
+
   // ── Workout Plans ───────────────────────────────────────────────────────
   getActivePlan: () => {
     const all = getTable<Record<string, unknown>>('workout_plans')
@@ -203,6 +248,101 @@ export const db = {
     }
   },
 
+  // ── Water Tracking ───────────────────────────────────────────────────────
+  getWaterByDate: (date: string) => {
+    const all = getTable<Record<string, unknown>>('water_entries')
+    return all
+      .filter((e) => e.date === date)
+      .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))
+  },
+
+  addWater: (entry: Record<string, unknown>) => {
+    const all = getTable<Record<string, unknown>>('water_entries')
+    const newEntry = { ...entry, id: generateId(), created_at: new Date().toISOString() }
+    all.push(newEntry)
+    setTable('water_entries', all)
+    return newEntry
+  },
+
+  deleteWater: (id: string) => {
+    const all = getTable<Record<string, unknown>>('water_entries')
+    setTable('water_entries', all.filter((e) => e.id !== id))
+  },
+
+  getWaterByDateRange: (startDate: string, endDate: string) => {
+    const all = getTable<Record<string, unknown>>('water_entries')
+    return all.filter((e) => String(e.date) >= startDate && String(e.date) <= endDate)
+  },
+
+  // ── Weight Tracking ─────────────────────────────────────────────────────
+  getWeightLogs: (limit = 90) => {
+    const all = getTable<Record<string, unknown>>('weight_logs')
+    return all
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+      .slice(0, limit)
+  },
+
+  addWeightLog: (log: Record<string, unknown>) => {
+    const all = getTable<Record<string, unknown>>('weight_logs')
+    // Upsert: one entry per date
+    const existingIdx = all.findIndex((l) => l.date === log.date)
+    const entry = {
+      ...log,
+      id: existingIdx >= 0 ? all[existingIdx].id : generateId(),
+      created_at: existingIdx >= 0 ? all[existingIdx].created_at : new Date().toISOString(),
+    }
+    if (existingIdx >= 0) {
+      all[existingIdx] = entry
+    } else {
+      all.push(entry)
+    }
+    setTable('weight_logs', all)
+    return entry
+  },
+
+  deleteWeightLog: (id: string) => {
+    const all = getTable<Record<string, unknown>>('weight_logs')
+    setTable('weight_logs', all.filter((l) => l.id !== id))
+  },
+
+  // ── Daily Notes ─────────────────────────────────────────────────────────
+  getDailyNote: (date: string) => {
+    const all = getTable<Record<string, unknown>>('daily_notes')
+    return all.find((n) => n.date === date) || null
+  },
+
+  saveDailyNote: (date: string, content: string) => {
+    const all = getTable<Record<string, unknown>>('daily_notes')
+    const existingIdx = all.findIndex((n) => n.date === date)
+    const now = new Date().toISOString()
+    if (existingIdx >= 0) {
+      all[existingIdx] = { ...all[existingIdx], content, updated_at: now }
+      setTable('daily_notes', all)
+      return all[existingIdx]
+    } else {
+      const newNote = { id: generateId(), date, content, created_at: now, updated_at: now }
+      all.push(newNote)
+      setTable('daily_notes', all)
+      return newNote
+    }
+  },
+
+  // ── Data Export ─────────────────────────────────────────────────────────
+  exportAllData: () => {
+    if (typeof window === 'undefined') return null
+    const data: Record<string, unknown> = {}
+    const keys = Object.keys(localStorage).filter((k) => k.startsWith('fitsync_'))
+    keys.forEach((k) => {
+      try {
+        const raw = localStorage.getItem(k)
+        data[k.replace('fitsync_', '')] = raw ? JSON.parse(raw) : null
+      } catch {
+        data[k.replace('fitsync_', '')] = localStorage.getItem(k)
+      }
+    })
+    return data
+  },
+
   // ── Streaks ─────────────────────────────────────────────────────────────
   getStreaks: () => {
     let streaks = getSingleton<Record<string, unknown>[]>('streaks')
@@ -280,6 +420,62 @@ export const db = {
     all.push(newMsg)
     setTable('chat_history', all)
     return newMsg
+  },
+
+  // ── Saved Custom Workouts ────────────────────────────────────────────────
+  getSavedWorkouts: () => {
+    const all = getTable<Record<string, unknown>>('saved_workouts')
+    return all.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+  },
+
+  saveWorkout: (workout: Record<string, unknown>) => {
+    const all = getTable<Record<string, unknown>>('saved_workouts')
+    const newWorkout = { ...workout, id: generateId(), created_at: new Date().toISOString(), last_used: null }
+    all.push(newWorkout)
+    setTable('saved_workouts', all)
+    return newWorkout
+  },
+
+  updateSavedWorkout: (id: string, updates: Record<string, unknown>) => {
+    const all = getTable<Record<string, unknown>>('saved_workouts')
+    const idx = all.findIndex((w) => w.id === id)
+    if (idx >= 0) {
+      all[idx] = { ...all[idx], ...updates }
+      setTable('saved_workouts', all)
+      return all[idx]
+    }
+    return null
+  },
+
+  deleteSavedWorkout: (id: string) => {
+    const all = getTable<Record<string, unknown>>('saved_workouts')
+    setTable('saved_workouts', all.filter((w) => w.id !== id))
+  },
+
+  markSavedWorkoutUsed: (id: string) => {
+    const all = getTable<Record<string, unknown>>('saved_workouts')
+    const idx = all.findIndex((w) => w.id === id)
+    if (idx >= 0) {
+      all[idx] = { ...all[idx], last_used: new Date().toISOString() }
+      setTable('saved_workouts', all)
+    }
+  },
+
+  // ── Exercise Weight History ─────────────────────────────────────────────
+  getLastWeightForExercise: (exerciseName: string): number | null => {
+    const logs = getTable<Record<string, unknown>>('workout_logs')
+    const sorted = logs.sort((a, b) => String(b.date).localeCompare(String(a.date)))
+    for (const log of sorted) {
+      const exercises = (log.exercises as Array<{ name: string; sets: Array<{ weight: number; completed: boolean }> }>) ?? []
+      const match = exercises.find((e) => e.name.toLowerCase() === exerciseName.toLowerCase())
+      if (match) {
+        const completedSets = match.sets.filter((s) => s.completed && s.weight > 0)
+        if (completedSets.length > 0) {
+          return Math.max(...completedSets.map((s) => s.weight))
+        }
+      }
+    }
+    return null
   },
 
   // ── Reset ───────────────────────────────────────────────────────────────

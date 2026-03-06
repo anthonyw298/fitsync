@@ -1,8 +1,15 @@
+export interface User {
+  id: string
+  email: string
+  created_at: string
+}
+
 export interface UserProfile {
   id: string
+  user_id: string
   age: number
   height_in: number
-  weight_lbs: number
+  weight_kg: number
   gender: 'male' | 'female'
   activity_level: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active'
   fitness_goal: 'cut' | 'maintain' | 'bulk'
@@ -11,12 +18,15 @@ export interface UserProfile {
   daily_carbs: number
   daily_fats: number
   workout_days_per_week: number
+  goal_weight_lbs: number | null
+  daily_water_ml: number
   created_at: string
   updated_at: string
 }
 
 export interface FoodEntry {
   id: string
+  user_id: string
   date: string
   meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack'
   food_name: string
@@ -27,12 +37,14 @@ export interface FoodEntry {
   fats_g: number
   fiber_g: number
   serving_size: string
+  number_of_servings: number
   ai_confidence: number
   created_at: string
 }
 
 export interface WorkoutPlan {
   id: string
+  user_id: string
   week_number: number
   plan_data: WorkoutDay[]
   split_type: string
@@ -69,6 +81,7 @@ export interface ActualSet {
 
 export interface WorkoutLog {
   id: string
+  user_id: string
   date: string
   plan_id: string | null
   workout_name: string
@@ -87,6 +100,7 @@ export interface LoggedExercise {
 
 export interface SleepLog {
   id: string
+  user_id: string
   date: string
   bedtime: string
   wake_time: string
@@ -99,6 +113,7 @@ export interface SleepLog {
 
 export interface Supplement {
   id: string
+  user_id: string
   name: string
   dosage: string
   unit: string
@@ -109,6 +124,7 @@ export interface Supplement {
 
 export interface SupplementLog {
   id: string
+  user_id: string
   supplement_id: string
   date: string
   taken: boolean
@@ -118,6 +134,7 @@ export interface SupplementLog {
 
 export interface Streak {
   id: string
+  user_id: string
   streak_type: 'overall' | 'workout' | 'food' | 'sleep' | 'supplements'
   current_count: number
   best_count: number
@@ -127,6 +144,7 @@ export interface Streak {
 
 export interface Achievement {
   id: string
+  user_id: string
   badge_name: string
   badge_icon: string
   description: string
@@ -136,8 +154,52 @@ export interface Achievement {
 
 export interface ChatMessage {
   id: string
+  user_id: string
   role: 'user' | 'assistant'
   content: string
   context_type: 'nutrition' | 'workout' | 'sleep' | 'general'
   created_at: string
+}
+
+export interface WaterEntry {
+  id: string
+  date: string
+  amount_ml: number
+  created_at: string
+}
+
+export interface WeightLog {
+  id: string
+  date: string
+  weight_lbs: number
+  notes: string
+  created_at: string
+}
+
+export interface DailyNote {
+  id: string
+  date: string
+  content: string
+  created_at: string
+  updated_at: string
+}
+
+// ─── Custom Workout Types ────────────────────────────────────────────────────
+
+export interface CustomExerciseEntry {
+  exercise_id: string
+  name: string
+  sets: number
+  reps: string
+  weight: number | null
+  rest_seconds: number
+  notes: string
+}
+
+export interface SavedWorkout {
+  id: string
+  name: string
+  exercises: CustomExerciseEntry[]
+  created_at: string
+  last_used: string | null
 }

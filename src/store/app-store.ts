@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { db } from '@/lib/local-db'
 import type {
   UserProfile,
   FoodEntry,
@@ -10,12 +9,38 @@ import type {
   SupplementLog,
   Streak,
   Achievement,
+  WaterEntry,
+  WeightLog,
 } from '@/lib/database.types'
 import { getToday } from '@/lib/utils'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-function cast<T>(val: any): T {
-  return val as T
+
+async function api<T>(url: string, options?: RequestInit): Promise<T | null> {
+  try {
+    const res = await fetch(url, options)
+    if (!res.ok) return null
+    const json = await res.json()
+    return json.data ?? null
+  } catch {
+    return null
+  }
+}
+
+async function apiPost<T>(url: string, body: unknown): Promise<T | null> {
+  return api<T>(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
+async function apiPut<T>(url: string, body: unknown): Promise<T | null> {
+  return api<T>(url, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
 }
 
 interface AppState {
@@ -23,15 +48,36 @@ interface AppState {
   profile: UserProfile | null
   profileLoading: boolean
   fetchProfile: () => Promise<void>
-  updateProfile: (data: Partial<UserProfile>) => Promise<void>
+  updateProfile: (data: Omit<UserProfile, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void>
 
   // Food
   todayFood: FoodEntry[]
   foodLoading: boolean
   fetchTodayFood: () => Promise<void>
   fetchFoodByDate: (date: string) => Promise<FoodEntry[]>
-  addFoodEntry: (entry: Omit<FoodEntry, 'id' | 'created_at'>) => Promise<void>
+  addFoodEntry: (entry: Omit<FoodEntry, 'id' | 'user_id' | 'created_at'>) => Promise<void>
+  updateFoodEntry: (id: string, updates: Partial<FoodEntry>) => Promise<FoodEntry | null>
   deleteFoodEntry: (id: string) => Promise<void>
+
+  // Recent / Frequent Foods
+  recentFoods: FoodEntry[]
+  frequentFoods: (FoodEntry & { frequency?: number })[]
+  fetchRecentFoods: () => Promise<void>
+  fetchFrequentFoods: () => Promise<void>
+
+  // Water
+  todayWater: WaterEntry[]
+  waterLoading: boolean
+  fetchWaterByDate: (date: string) => Promise<WaterEntry[]>
+  addWaterEntry: (date: string, amountMl: number) => Promise<void>
+  deleteWaterEntry: (id: string) => Promise<void>
+
+  // Weight
+  weightLogs: WeightLog[]
+  weightLoading: boolean
+  fetchWeightLogs: () => Promise<void>
+  addWeightLog: (date: string, weightLbs: number, notes?: string) => Promise<void>
+  deleteWeightLog: (id: string) => Promise<void>
 
   // Workout
   activePlan: WorkoutPlan | null
@@ -39,14 +85,14 @@ interface AppState {
   workoutLoading: boolean
   fetchActivePlan: () => Promise<void>
   fetchTodayWorkout: () => Promise<void>
-  addWorkoutLog: (log: Omit<WorkoutLog, 'id' | 'created_at'>) => Promise<void>
+  addWorkoutLog: (log: Omit<WorkoutLog, 'id' | 'user_id' | 'created_at'>) => Promise<void>
   updateWorkoutLog: (id: string, data: Partial<WorkoutLog>) => Promise<void>
 
   // Sleep
   recentSleep: SleepLog[]
   sleepLoading: boolean
   fetchRecentSleep: () => Promise<void>
-  addSleepLog: (log: Omit<SleepLog, 'id' | 'created_at'>) => Promise<void>
+  addSleepLog: (log: Omit<SleepLog, 'id' | 'user_id' | 'created_at'>) => Promise<void>
 
   // Supplements
   supplements: Supplement[]
@@ -54,7 +100,7 @@ interface AppState {
   supplementsLoading: boolean
   fetchSupplements: () => Promise<void>
   fetchTodaySupplementLogs: () => Promise<void>
-  addSupplement: (supp: Omit<Supplement, 'id' | 'created_at'>) => Promise<void>
+  addSupplement: (supp: Omit<Supplement, 'id' | 'user_id' | 'created_at' | 'active'>) => Promise<void>
   toggleSupplementTaken: (supplementId: string, date: string) => Promise<void>
   deleteSupplement: (id: string) => Promise<void>
 
@@ -75,14 +121,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   profileLoading: false,
   fetchProfile: async () => {
     set({ profileLoading: true })
-    const data = db.getProfile()
-    set({ profile: cast<UserProfile | null>(data), profileLoading: false })
+    const data = await api<UserProfile>('/api/data/profile')
+    set({ profile: data, profileLoading: false })
   },
   updateProfile: async (updates) => {
-    const current = db.getProfile() || {}
-    const merged = { ...current, ...updates, updated_at: new Date().toISOString() }
-    db.setProfile(merged)
-    set({ profile: cast<UserProfile>(merged) })
+    const data = await apiPut<UserProfile>('/api/data/profile', updates)
+    if (data) set({ profile: data })
   },
 
   // Food
@@ -90,24 +134,85 @@ export const useAppStore = create<AppState>((set, get) => ({
   foodLoading: false,
   fetchTodayFood: async () => {
     set({ foodLoading: true })
-    const data = db.getFoodByDate(getToday())
-    set({ todayFood: cast<FoodEntry[]>(data), foodLoading: false })
+    const data = await api<FoodEntry[]>(`/api/data/food?date=${getToday()}`)
+    set({ todayFood: data ?? [], foodLoading: false })
   },
   fetchFoodByDate: async (date: string) => {
-    const data = db.getFoodByDate(date)
-    return cast<FoodEntry[]>(data)
+    const data = await api<FoodEntry[]>(`/api/data/food?date=${date}`)
+    return data ?? []
   },
   addFoodEntry: async (entry) => {
-    const data = db.addFood(entry as any)
-    if (entry.date === getToday()) {
-      set({ todayFood: [...get().todayFood, cast<FoodEntry>(data)] })
+    const data = await apiPost<FoodEntry>('/api/data/food', entry)
+    if (data && entry.date === getToday()) {
+      set({ todayFood: [...get().todayFood, data] })
     }
-    db.updateStreak('food', entry.date)
-    db.updateStreak('overall', entry.date)
+    await apiPost('/api/data/streaks', { streakType: 'food', date: entry.date })
+    await apiPost('/api/data/streaks', { streakType: 'overall', date: entry.date })
+  },
+  updateFoodEntry: async (id, updates) => {
+    const data = await apiPut<FoodEntry>(`/api/data/food?id=${id}`, updates)
+    if (data) {
+      set({ todayFood: get().todayFood.map((f) => (f.id === id ? data : f)) })
+    }
+    return data
   },
   deleteFoodEntry: async (id) => {
-    db.deleteFood(id)
+    await fetch(`/api/data/food?id=${id}`, { method: 'DELETE' })
     set({ todayFood: get().todayFood.filter((f) => f.id !== id) })
+  },
+
+  // Recent / Frequent Foods
+  recentFoods: [],
+  frequentFoods: [],
+  fetchRecentFoods: async () => {
+    const data = await api<FoodEntry[]>('/api/data/food/recent?type=recent&limit=20')
+    set({ recentFoods: data ?? [] })
+  },
+  fetchFrequentFoods: async () => {
+    const data = await api<(FoodEntry & { frequency?: number })[]>('/api/data/food/recent?type=frequent&limit=20')
+    set({ frequentFoods: data ?? [] })
+  },
+
+  // Water
+  todayWater: [],
+  waterLoading: false,
+  fetchWaterByDate: async (date: string) => {
+    set({ waterLoading: true })
+    const data = await api<WaterEntry[]>(`/api/data/water?date=${date}`)
+    const entries = data ?? []
+    if (date === getToday()) set({ todayWater: entries })
+    set({ waterLoading: false })
+    return entries
+  },
+  addWaterEntry: async (date, amountMl) => {
+    const data = await apiPost<WaterEntry>('/api/data/water', { date, amount_ml: amountMl })
+    if (data && date === getToday()) {
+      set({ todayWater: [...get().todayWater, data] })
+    }
+  },
+  deleteWaterEntry: async (id) => {
+    await fetch(`/api/data/water?id=${id}`, { method: 'DELETE' })
+    set({ todayWater: get().todayWater.filter((w) => w.id !== id) })
+  },
+
+  // Weight
+  weightLogs: [],
+  weightLoading: false,
+  fetchWeightLogs: async () => {
+    set({ weightLoading: true })
+    const data = await api<WeightLog[]>('/api/data/weight?limit=90')
+    set({ weightLogs: data ?? [], weightLoading: false })
+  },
+  addWeightLog: async (date, weightLbs, notes) => {
+    const data = await apiPost<WeightLog>('/api/data/weight', { date, weight_lbs: weightLbs, notes: notes || '' })
+    if (data) {
+      const existing = get().weightLogs.filter((w) => w.date !== date)
+      set({ weightLogs: [data, ...existing].sort((a, b) => b.date.localeCompare(a.date)) })
+    }
+  },
+  deleteWeightLog: async (id) => {
+    await fetch(`/api/data/weight?id=${id}`, { method: 'DELETE' })
+    set({ weightLogs: get().weightLogs.filter((w) => w.id !== id) })
   },
 
   // Workout
@@ -116,22 +221,22 @@ export const useAppStore = create<AppState>((set, get) => ({
   workoutLoading: false,
   fetchActivePlan: async () => {
     set({ workoutLoading: true })
-    const data = db.getActivePlan()
-    set({ activePlan: cast<WorkoutPlan | null>(data), workoutLoading: false })
+    const data = await api<WorkoutPlan>('/api/data/workout/plans')
+    set({ activePlan: data, workoutLoading: false })
   },
   fetchTodayWorkout: async () => {
-    const data = db.getWorkoutByDate(getToday())
-    set({ todayWorkout: cast<WorkoutLog | null>(data) })
+    const data = await api<WorkoutLog>(`/api/data/workout/logs?date=${getToday()}`)
+    set({ todayWorkout: data })
   },
   addWorkoutLog: async (log) => {
-    const data = db.addWorkoutLog(log as any)
-    set({ todayWorkout: cast<WorkoutLog>(data) })
-    db.updateStreak('workout', getToday())
-    db.updateStreak('overall', getToday())
+    const data = await apiPost<WorkoutLog>('/api/data/workout/logs', log)
+    if (data) set({ todayWorkout: data })
+    await apiPost('/api/data/streaks', { streakType: 'workout', date: getToday() })
+    await apiPost('/api/data/streaks', { streakType: 'overall', date: getToday() })
   },
   updateWorkoutLog: async (id, updates) => {
-    const data = db.updateWorkoutLog(id, updates as any)
-    if (data) set({ todayWorkout: cast<WorkoutLog>(data) })
+    const data = await apiPut<WorkoutLog>(`/api/data/workout/logs?id=${id}`, updates)
+    if (data) set({ todayWorkout: data })
   },
 
   // Sleep
@@ -139,14 +244,16 @@ export const useAppStore = create<AppState>((set, get) => ({
   sleepLoading: false,
   fetchRecentSleep: async () => {
     set({ sleepLoading: true })
-    const data = db.getRecentSleep(30)
-    set({ recentSleep: cast<SleepLog[]>(data), sleepLoading: false })
+    const data = await api<SleepLog[]>('/api/data/sleep?limit=30')
+    set({ recentSleep: data ?? [], sleepLoading: false })
   },
   addSleepLog: async (log) => {
-    const data = db.addSleepLog(log as any)
-    set({ recentSleep: [cast<SleepLog>(data), ...get().recentSleep.filter((s) => s.date !== (log as any).date)] })
-    db.updateStreak('sleep', getToday())
-    db.updateStreak('overall', getToday())
+    const data = await apiPost<SleepLog>('/api/data/sleep', log)
+    if (data) {
+      set({ recentSleep: [data, ...get().recentSleep.filter((s) => s.date !== (log as any).date)] })
+    }
+    await apiPost('/api/data/streaks', { streakType: 'sleep', date: getToday() })
+    await apiPost('/api/data/streaks', { streakType: 'overall', date: getToday() })
   },
 
   // Supplements
@@ -155,32 +262,24 @@ export const useAppStore = create<AppState>((set, get) => ({
   supplementsLoading: false,
   fetchSupplements: async () => {
     set({ supplementsLoading: true })
-    const data = db.getSupplements()
-    set({ supplements: cast<Supplement[]>(data), supplementsLoading: false })
+    const data = await api<Supplement[]>('/api/data/supplements')
+    set({ supplements: data ?? [], supplementsLoading: false })
   },
   fetchTodaySupplementLogs: async () => {
-    const data = db.getSupplementLogsByDate(getToday())
-    set({ todaySupplementLogs: cast<SupplementLog[]>(data) })
+    const data = await api<SupplementLog[]>(`/api/data/supplements/logs?date=${getToday()}`)
+    set({ todaySupplementLogs: data ?? [] })
   },
   addSupplement: async (supp) => {
-    const data = db.addSupplement(supp as any)
-    set({ supplements: [...get().supplements, cast<Supplement>(data)] })
+    const data = await apiPost<Supplement>('/api/data/supplements', supp)
+    if (data) set({ supplements: [...get().supplements, data] })
   },
   toggleSupplementTaken: async (supplementId, date) => {
-    db.toggleSupplementLog(supplementId, date)
-    const data = db.getSupplementLogsByDate(getToday())
-    set({ todaySupplementLogs: cast<SupplementLog[]>(data) })
-    // Check if all supplements taken
-    const allSupps = db.getSupplements()
-    const allLogs = db.getSupplementLogsByDate(date)
-    const takenCount = allLogs.filter((l) => l.taken).length
-    if (takenCount >= allSupps.length && allSupps.length > 0) {
-      db.updateStreak('supplements', date)
-      db.updateStreak('overall', date)
-    }
+    await apiPost('/api/data/supplements/logs', { supplementId, date })
+    const data = await api<SupplementLog[]>(`/api/data/supplements/logs?date=${getToday()}`)
+    set({ todaySupplementLogs: data ?? [] })
   },
   deleteSupplement: async (id) => {
-    db.deleteSupplement(id)
+    await fetch(`/api/data/supplements?id=${id}`, { method: 'DELETE' })
     set({ supplements: get().supplements.filter((s) => s.id !== id) })
   },
 
@@ -188,12 +287,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   streaks: [],
   achievements: [],
   fetchStreaks: async () => {
-    const data = db.getStreaks()
-    set({ streaks: cast<Streak[]>(data) })
+    const data = await api<Streak[]>('/api/data/streaks')
+    set({ streaks: data ?? [] })
   },
   fetchAchievements: async () => {
-    const data = db.getAchievements()
-    set({ achievements: cast<Achievement[]>(data) })
+    const data = await api<Achievement[]>('/api/data/streaks?type=achievements')
+    set({ achievements: data ?? [] })
   },
 
   // UI

@@ -86,17 +86,17 @@ function HistoryEntry({ log }: { log: WorkoutLog }) {
             <div
               className={`flex h-10 w-10 items-center justify-center rounded-xl ${
                 log.completed
-                  ? 'bg-[#10B981]/15 text-[#10B981]'
-                  : 'bg-[#F59E0B]/15 text-[#F59E0B]'
+                  ? 'bg-[#34D399]/15 text-[#34D399]'
+                  : 'bg-[#FBBF24]/15 text-[#FBBF24]'
               }`}
             >
               <Dumbbell className="h-5 w-5" />
             </div>
             <div className="flex min-w-0 flex-col">
-              <span className="font-medium text-[#F1F1F3]">
+              <span className="font-medium text-[#EAEAF0]">
                 {log.workout_name}
               </span>
-              <div className="flex items-center gap-2 text-xs text-[#8888A0]">
+              <div className="flex items-center gap-2 text-xs text-[#6B6B8A]">
                 <span className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
                   {formatDate(log.date)}
@@ -111,15 +111,15 @@ function HistoryEntry({ log }: { log: WorkoutLog }) {
 
           <div className="ml-3 flex items-center gap-2">
             <div className="text-right">
-              <p className="text-sm font-semibold tabular-nums text-[#8B5CF6]">
+              <p className="text-sm font-semibold tabular-nums text-[#A78BFA]">
                 {volume.toLocaleString()}
               </p>
-              <p className="text-[10px] text-[#8888A0]">lbs vol</p>
+              <p className="text-[10px] text-[#6B6B8A]">lbs vol</p>
             </div>
             {expanded ? (
-              <ChevronUp className="h-4 w-4 text-[#8888A0]" />
+              <ChevronUp className="h-4 w-4 text-[#6B6B8A]" />
             ) : (
-              <ChevronDown className="h-4 w-4 text-[#8888A0]" />
+              <ChevronDown className="h-4 w-4 text-[#6B6B8A]" />
             )}
           </div>
         </button>
@@ -132,7 +132,7 @@ function HistoryEntry({ log }: { log: WorkoutLog }) {
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <div className="border-t border-[#1E1E2E] px-4 pb-4 pt-3">
+              <div className="border-t border-white/[0.06] px-4 pb-4 pt-3">
                 <div className="flex flex-col gap-2">
                   {log.exercises.map((ex, i) => {
                     const exVolume = ex.sets
@@ -142,11 +142,11 @@ function HistoryEntry({ log }: { log: WorkoutLog }) {
                     return (
                       <div
                         key={`${log.id}-ex-${i}`}
-                        className="flex items-center justify-between rounded-lg bg-[#0A0A0F]/60 px-3 py-2"
+                        className="flex items-center justify-between rounded-lg bg-transparent px-3 py-2"
                       >
                         <div className="flex flex-col">
-                          <span className="text-sm text-[#F1F1F3]">{ex.name}</span>
-                          <span className="text-[10px] text-[#8888A0]">
+                          <span className="text-sm text-[#EAEAF0]">{ex.name}</span>
+                          <span className="text-[10px] text-[#6B6B8A]">
                             {completedSets} sets completed
                           </span>
                         </div>
@@ -154,13 +154,13 @@ function HistoryEntry({ log }: { log: WorkoutLog }) {
                           {ex.sets.filter((s) => s.completed).map((s, si) => (
                             <span
                               key={`set-${si}`}
-                              className="text-[10px] tabular-nums text-[#8888A0]"
+                              className="text-[10px] tabular-nums text-[#6B6B8A]"
                             >
-                              {s.reps} reps x {s.weight} lbs
+                              {s.reps} reps x {s.weight} kg
                             </span>
                           ))}
-                          <span className="mt-0.5 text-xs font-medium tabular-nums text-[#8B5CF6]">
-                            {exVolume.toLocaleString()} lbs
+                          <span className="mt-0.5 text-xs font-medium tabular-nums text-[#A78BFA]">
+                            {exVolume.toLocaleString()} kg
                           </span>
                         </div>
                       </div>
@@ -169,12 +169,12 @@ function HistoryEntry({ log }: { log: WorkoutLog }) {
                 </div>
 
                 {log.notes && (
-                  <p className="mt-3 text-xs italic text-[#8888A0]">{log.notes}</p>
+                  <p className="mt-3 text-xs italic text-[#6B6B8A]">{log.notes}</p>
                 )}
 
-                <div className="mt-3 flex items-center gap-4 text-xs text-[#8888A0]">
+                <div className="mt-3 flex items-center gap-4 text-xs text-[#6B6B8A]">
                   <span className="flex items-center gap-1">
-                    <Flame className="h-3 w-3 text-[#F59E0B]" />
+                    <Flame className="h-3 w-3 text-[#FBBF24]" />
                     {log.calories_burned} cal
                   </span>
                   <Badge variant={log.completed ? 'success' : 'warning'}>
@@ -205,9 +205,9 @@ function ChartTooltip({
 }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border border-[#1E1E2E] bg-[#13131A] px-3 py-2 shadow-lg">
-      <p className="text-xs text-[#8888A0]">{label}</p>
-      <p className="text-sm font-semibold text-[#8B5CF6]">
+    <div className="rounded-lg border border-white/[0.06] bg-[#0E0E18] px-3 py-2 shadow-lg">
+      <p className="text-xs text-[#6B6B8A]">{label}</p>
+      <p className="text-sm font-semibold text-[#A78BFA]">
         {payload[0].value.toLocaleString()} lbs
       </p>
     </div>
@@ -252,28 +252,28 @@ export default function WorkoutHistoryPage() {
   }).length
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] pb-28">
+    <div className="min-h-screen pb-28">
       <PageHeader title="Workout History" subtitle={`${logs.length} workouts logged`} />
 
       <div className="flex flex-col gap-4 px-4 pt-4">
         {/* Weekly stats */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-          <Card>
+          <Card className="gradient-border">
             <CardContent>
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div>
-                  <p className="text-2xl font-bold tabular-nums text-[#8B5CF6]">
+                  <p className="text-2xl font-bold tabular-nums text-[#A78BFA]">
                     {totalWeeklyVolume.toLocaleString()}
                   </p>
-                  <p className="text-[10px] uppercase tracking-wider text-[#8888A0]">
+                  <p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">
                     Weekly Volume (lbs)
                   </p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold tabular-nums text-[#10B981]">
+                  <p className="text-2xl font-bold tabular-nums text-[#34D399]">
                     {workoutCount}
                   </p>
-                  <p className="text-[10px] uppercase tracking-wider text-[#8888A0]">
+                  <p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">
                     Workouts This Week
                   </p>
                 </div>
@@ -288,10 +288,10 @@ export default function WorkoutHistoryPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card>
+          <Card className="gradient-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-[#8B5CF6]" />
+                <TrendingUp className="h-4 w-4 text-[#A78BFA]" />
                 Weekly Volume
               </CardTitle>
             </CardHeader>
@@ -303,12 +303,12 @@ export default function WorkoutHistoryPage() {
                       dataKey="day"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#8888A0', fontSize: 11 }}
+                      tick={{ fill: '#6B6B8A', fontSize: 11 }}
                     />
                     <YAxis
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#8888A0', fontSize: 11 }}
+                      tick={{ fill: '#6B6B8A', fontSize: 11 }}
                       width={45}
                       tickFormatter={(v: number) =>
                         v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(v)
@@ -320,7 +320,7 @@ export default function WorkoutHistoryPage() {
                     />
                     <Bar
                       dataKey="volume"
-                      fill="#8B5CF6"
+                      fill="#A78BFA"
                       radius={[6, 6, 0, 0]}
                       animationDuration={800}
                     />
@@ -333,21 +333,21 @@ export default function WorkoutHistoryPage() {
 
         {/* Workout Logs List */}
         <div className="flex flex-col gap-3">
-          <h3 className="px-1 text-sm font-semibold text-[#F1F1F3]">
+          <h3 className="px-1 text-sm font-semibold text-[#EAEAF0]">
             All Workouts
           </h3>
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#8B5CF6] border-t-transparent" />
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#A78BFA] border-t-transparent" />
             </div>
           ) : logs.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center gap-3 py-8">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#1E1E2E]">
-                  <Dumbbell className="h-7 w-7 text-[#8888A0]" />
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.06]">
+                  <Dumbbell className="h-7 w-7 text-[#6B6B8A]" />
                 </div>
-                <p className="text-sm text-[#8888A0]">
+                <p className="text-sm text-[#6B6B8A]">
                   No workouts logged yet. Complete your first workout!
                 </p>
               </CardContent>

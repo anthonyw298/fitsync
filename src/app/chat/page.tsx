@@ -13,7 +13,6 @@ import {
   MessageCircle,
 } from 'lucide-react'
 import { useAppStore } from '@/store/app-store'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { db } from '@/lib/local-db'
@@ -97,7 +96,7 @@ export default function ChatPage() {
       profile: profile
         ? {
             age: profile.age,
-            weight_lbs: profile.weight_lbs,
+            weight_kg: profile.weight_kg,
             height_in: profile.height_in,
             gender: profile.gender,
             activity_level: profile.activity_level,
@@ -194,9 +193,7 @@ export default function ChatPage() {
 
   /* ── Send via suggestion chip ──────────────────────────────────────────── */
   const handleSuggestion = async (text: string) => {
-    // Save user message to local DB
     await db.addChatMessage({ role: 'user', content: text, context_type: 'general' })
-
     sendMessage({ text })
   }
 
@@ -208,9 +205,7 @@ export default function ChatPage() {
     const userMsg = chatInput.trim()
     setChatInput('')
 
-    // Save user message to local DB
     await db.addChatMessage({ role: 'user', content: userMsg, context_type: 'general' })
-
     sendMessage({ text: userMsg })
   }
 
@@ -234,20 +229,21 @@ export default function ChatPage() {
   /* ──────────────────────────────────────────────────────────────────────── */
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-[#0A0A0F]">
+    <div className="flex h-[100dvh] flex-col">
       {/* ── Header ───────────────────────────────────────────────────────── */}
-      <header className="shrink-0 border-b border-[#1E1E2E] bg-[#13131A]/80 backdrop-blur-xl px-4 pt-[env(safe-area-inset-top,0px)]">
+      <header className="shrink-0 glass-dense px-4 pt-[env(safe-area-inset-top,0px)]">
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#A78BFA]/15 to-transparent" />
         <div className="mx-auto flex h-14 max-w-lg items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#8B5CF6]/15">
-            <Sparkles className="h-5 w-5 text-[#8B5CF6]" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#A78BFA]/15 to-[#38BDF8]/10 shadow-[0_0_16px_rgba(167,139,250,0.1)]">
+            <Sparkles className="h-5 w-5 text-[#A78BFA]" />
           </div>
           <div className="flex-1">
-            <h1 className="text-base font-semibold text-[#F1F1F3]">
+            <h1 className="font-display text-base font-semibold text-[#EAEAF0]">
               AI Coach
             </h1>
             {contextItems.length > 0 && (
               <div className="mt-0.5 flex flex-wrap gap-1">
-                <span className="text-[10px] text-[#8888A0]">AI knows:</span>
+                <span className="text-[10px] text-[#6B6B8A]">AI knows:</span>
                 {contextItems.map((item) => (
                   <Badge key={item} variant="default" className="text-[9px] px-1.5 py-0">
                     {item}
@@ -268,17 +264,21 @@ export default function ChatPage() {
           {/* Empty state */}
           {isEmpty && historyLoaded && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 20, filter: 'blur(4px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="flex flex-col items-center justify-center py-20 text-center"
             >
-              <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-[#8B5CF6]/10 ring-1 ring-[#8B5CF6]/20">
-                <MessageCircle className="h-10 w-10 text-[#8B5CF6]" />
+              <div className="relative mb-6">
+                <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-[#A78BFA]/10 to-[#38BDF8]/5 ring-1 ring-[#A78BFA]/15">
+                  <MessageCircle className="h-10 w-10 text-[#A78BFA]" />
+                </div>
+                <div className="absolute -inset-2 rounded-3xl bg-gradient-to-br from-[#A78BFA]/5 to-transparent blur-xl -z-10" />
               </div>
-              <h2 className="text-lg font-semibold text-[#F1F1F3]">
+              <h2 className="font-display text-lg font-semibold text-[#EAEAF0]">
                 Hi! I&apos;m your FitSync AI coach.
               </h2>
-              <p className="mt-2 max-w-xs text-sm text-[#8888A0]">
+              <p className="mt-2 max-w-xs text-sm leading-relaxed text-[#6B6B8A]">
                 Ask me anything about your nutrition, workouts, or sleep. I have
                 access to your data and can give personalized advice.
               </p>
@@ -290,7 +290,6 @@ export default function ChatPage() {
             {messages.map((message) => {
               const isUser = message.role === 'user'
               const ts = getTimestamp(message.id)
-              // Extract text content from message parts
               const textContent = message.parts
                 ?.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
                 .map((p) => p.text)
@@ -299,24 +298,24 @@ export default function ChatPage() {
               return (
                 <motion.div
                   key={message.id}
-                  initial={{ opacity: 0, y: 12, scale: 0.97 }}
+                  initial={{ opacity: 0, y: 10, scale: 0.97 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                   className={`flex gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
                 >
                   {/* Avatar */}
                   <div
                     className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
                       isUser
-                        ? 'bg-[#8B5CF6]/20'
-                        : 'bg-[#1E1E2E]'
+                        ? 'bg-gradient-to-br from-[#A78BFA]/20 to-[#7C3AED]/10'
+                        : 'bg-white/[0.04] border border-white/[0.06]'
                     }`}
                   >
                     {isUser ? (
-                      <User className="h-4 w-4 text-[#8B5CF6]" />
+                      <User className="h-4 w-4 text-[#A78BFA]" />
                     ) : (
-                      <Bot className="h-4 w-4 text-[#8888A0]" />
+                      <Bot className="h-4 w-4 text-[#6B6B8A]" />
                     )}
                   </div>
 
@@ -324,8 +323,8 @@ export default function ChatPage() {
                   <div
                     className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                       isUser
-                        ? 'bg-[#8B5CF6] text-white rounded-br-md'
-                        : 'bg-[#13131A] border border-[#1E1E2E] text-[#F1F1F3] rounded-bl-md'
+                        ? 'bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white rounded-br-md shadow-[0_2px_16px_rgba(167,139,250,0.2)]'
+                        : 'glass text-[#EAEAF0] rounded-bl-md'
                     }`}
                   >
                     <p className="whitespace-pre-wrap text-sm leading-relaxed">
@@ -334,7 +333,7 @@ export default function ChatPage() {
                     {ts && (
                       <p
                         className={`mt-1.5 text-[10px] ${
-                          isUser ? 'text-white/50' : 'text-[#8888A0]/60'
+                          isUser ? 'text-white/40' : 'text-[#6B6B8A]/50'
                         }`}
                       >
                         {formatTimestamp(ts)}
@@ -353,25 +352,25 @@ export default function ChatPage() {
               animate={{ opacity: 1, y: 0 }}
               className="flex gap-2.5"
             >
-              <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#1E1E2E]">
-                <Bot className="h-4 w-4 text-[#8888A0]" />
+              <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] border border-white/[0.06]">
+                <Bot className="h-4 w-4 text-[#6B6B8A]" />
               </div>
-              <div className="rounded-2xl rounded-bl-md border border-[#1E1E2E] bg-[#13131A] px-4 py-3">
+              <div className="glass rounded-2xl rounded-bl-md px-4 py-3">
                 <div className="flex items-center gap-1.5">
                   <motion.span
-                    className="h-2 w-2 rounded-full bg-[#8B5CF6]"
-                    animate={{ opacity: [0.3, 1, 0.3] }}
-                    transition={{ duration: 1.2, repeat: Infinity, delay: 0 }}
+                    className="h-1.5 w-1.5 rounded-full bg-[#A78BFA]"
+                    animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.1, 0.8] }}
+                    transition={{ duration: 1.4, repeat: Infinity, delay: 0 }}
                   />
                   <motion.span
-                    className="h-2 w-2 rounded-full bg-[#8B5CF6]"
-                    animate={{ opacity: [0.3, 1, 0.3] }}
-                    transition={{ duration: 1.2, repeat: Infinity, delay: 0.2 }}
+                    className="h-1.5 w-1.5 rounded-full bg-[#38BDF8]"
+                    animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.1, 0.8] }}
+                    transition={{ duration: 1.4, repeat: Infinity, delay: 0.2 }}
                   />
                   <motion.span
-                    className="h-2 w-2 rounded-full bg-[#8B5CF6]"
-                    animate={{ opacity: [0.3, 1, 0.3] }}
-                    transition={{ duration: 1.2, repeat: Infinity, delay: 0.4 }}
+                    className="h-1.5 w-1.5 rounded-full bg-[#34D399]"
+                    animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.1, 0.8] }}
+                    transition={{ duration: 1.4, repeat: Infinity, delay: 0.4 }}
                   />
                 </div>
               </div>
@@ -381,7 +380,9 @@ export default function ChatPage() {
       </div>
 
       {/* ── Bottom input area ────────────────────────────────────────────── */}
-      <div className="shrink-0 border-t border-[#1E1E2E] bg-[#13131A]/80 backdrop-blur-xl pb-[calc(70px+env(safe-area-inset-bottom,0px))]">
+      <div className="shrink-0 glass-dense pb-[calc(70px+env(safe-area-inset-bottom,0px))]">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+
         {/* Suggestion chips */}
         {isEmpty && historyLoaded && (
           <div className="overflow-x-auto px-4 pt-3 pb-1 scrollbar-hide">
@@ -391,7 +392,7 @@ export default function ChatPage() {
                   key={suggestion}
                   onClick={() => handleSuggestion(suggestion)}
                   disabled={isLoading}
-                  className="shrink-0 rounded-xl border border-[#1E1E2E] bg-[#0A0A0F] px-3.5 py-2 text-xs text-[#8888A0] transition-all duration-150 hover:border-[#8B5CF6]/40 hover:text-[#F1F1F3] active:scale-95 disabled:opacity-40"
+                  className="shrink-0 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2 text-xs text-[#6B6B8A] backdrop-blur-sm transition-all duration-250 hover:border-[#A78BFA]/25 hover:text-[#EAEAF0] hover:bg-white/[0.04] active:scale-95 disabled:opacity-40"
                 >
                   {suggestion}
                 </button>
@@ -410,7 +411,7 @@ export default function ChatPage() {
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Ask your AI coach..."
                 disabled={isLoading}
-                className="h-11 w-full rounded-xl border border-[#1E1E2E] bg-[#0A0A0F] px-4 pr-12 text-sm text-[#F1F1F3] placeholder:text-[#8888A0]/60 transition-all duration-200 focus:border-[#8B5CF6]/40 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/20 disabled:opacity-40"
+                className="h-11 w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 pr-12 text-sm text-[#EAEAF0] placeholder:text-[#6B6B8A]/50 backdrop-blur-sm transition-all duration-250 focus:border-[#A78BFA]/30 focus:outline-none focus:ring-2 focus:ring-[#A78BFA]/15 hover:border-[#A78BFA]/20 disabled:opacity-40"
               />
             </div>
             <Button

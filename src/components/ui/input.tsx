@@ -22,7 +22,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="text-sm font-medium text-[#F1F1F3]"
+            className="text-sm font-medium text-[#EAEAF0]"
           >
             {label}
           </label>
@@ -33,14 +33,15 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           type={type}
           className={cn(
-            "flex h-10 w-full rounded-xl border bg-[#13131A] px-3.5 py-2",
-            "text-sm text-[#F1F1F3] placeholder:text-[#8888A0]/60",
-            "transition-all duration-200",
-            "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-[#F1F1F3]",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0A0A0F]",
+            "flex h-10 w-full rounded-xl border px-3.5 py-2",
+            "bg-white/[0.03] backdrop-blur-sm",
+            "text-sm text-[#EAEAF0] placeholder:text-[#6B6B8A]/60",
+            "transition-all duration-250",
+            "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-[#EAEAF0]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-[#06060C]",
             error
-              ? "border-red-500/60 focus-visible:ring-red-500/50"
-              : "border-[#1E1E2E] focus-visible:ring-[#8B5CF6]/50 hover:border-[#8B5CF6]/30",
+              ? "border-[#F87171]/40 focus-visible:ring-[#F87171]/40"
+              : "border-white/[0.08] focus-visible:ring-[#A78BFA]/40 hover:border-[#A78BFA]/25 hover:bg-white/[0.04]",
             "disabled:cursor-not-allowed disabled:opacity-40",
             className
           )}
@@ -51,7 +52,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <p
             className={cn(
               "text-xs",
-              error ? "text-red-400" : "text-[#8888A0]"
+              error ? "text-[#F87171]" : "text-[#6B6B8A]"
             )}
           >
             {helperText}

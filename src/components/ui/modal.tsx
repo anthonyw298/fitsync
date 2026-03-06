@@ -24,14 +24,16 @@ const overlayVariants = {
 };
 
 const sheetVariants = {
-  hidden: { y: "100%" },
+  hidden: { y: "100%", opacity: 0.5 },
   visible: {
     y: 0,
-    transition: { type: "spring" as const, damping: 30, stiffness: 300 },
+    opacity: 1,
+    transition: { type: "spring" as const, damping: 32, stiffness: 340 },
   },
   exit: {
     y: "100%",
-    transition: { type: "tween" as const, duration: 0.22, ease: "easeIn" as const },
+    opacity: 0,
+    transition: { type: "tween" as const, duration: 0.2, ease: "easeIn" as const },
   },
 };
 
@@ -71,7 +73,7 @@ const Modal: React.FC<ModalProps> = ({
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
           {/* Backdrop */}
           <motion.div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/70 backdrop-blur-md"
             variants={overlayVariants}
             initial="hidden"
             animate="visible"
@@ -91,28 +93,28 @@ const Modal: React.FC<ModalProps> = ({
             exit="exit"
             className={cn(
               "relative z-10 w-full max-w-lg",
-              "rounded-t-2xl sm:rounded-2xl",
-              "border border-[#1E1E2E] bg-[#13131A]",
-              "shadow-[0_-8px_40px_rgba(0,0,0,0.5)]",
+              "rounded-t-3xl sm:rounded-3xl",
+              "glass-dense",
+              "shadow-[0_-8px_60px_rgba(0,0,0,0.6),0_0_40px_rgba(167,139,250,0.04)]",
               "max-h-[85vh] overflow-y-auto overscroll-contain",
               className
             )}
           >
             {/* Drag handle (mobile affordance) */}
             <div className="flex justify-center pt-3 sm:hidden">
-              <div className="h-1 w-10 rounded-full bg-[#1E1E2E]" />
+              <div className="h-1 w-10 rounded-full bg-white/10" />
             </div>
 
             {/* Header */}
             {title && (
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#1E1E2E] bg-[#13131A] px-5 py-4">
-                <h2 className="text-base font-semibold text-[#F1F1F3]">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/[0.06] glass-dense px-5 py-4">
+                <h2 className="font-display text-base font-semibold text-[#EAEAF0]">
                   {title}
                 </h2>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-lg p-1.5 text-[#8888A0] transition-colors hover:bg-[#1E1E2E] hover:text-[#F1F1F3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]"
+                  className="rounded-xl p-1.5 text-[#6B6B8A] transition-all duration-200 hover:bg-white/[0.06] hover:text-[#EAEAF0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A78BFA]"
                   aria-label="Close"
                 >
                   <X className="h-5 w-5" />
@@ -125,7 +127,7 @@ const Modal: React.FC<ModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="absolute right-3 top-3 rounded-lg p-1.5 text-[#8888A0] transition-colors hover:bg-[#1E1E2E] hover:text-[#F1F1F3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]"
+                className="absolute right-3 top-3 z-20 rounded-xl p-1.5 text-[#6B6B8A] transition-all duration-200 hover:bg-white/[0.06] hover:text-[#EAEAF0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A78BFA]"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />

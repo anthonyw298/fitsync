@@ -1,13 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import BottomNav from "@/components/layout/bottom-nav";
 import ServiceWorkerRegister from "@/components/layout/sw-register";
 import "./globals.css";
 
-const inter = Inter({
+const outfit = Outfit({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-inter",
+  variable: "--font-outfit",
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-jakarta",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -29,7 +37,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   userScalable: false,
-  themeColor: "#0A0A0F",
+  themeColor: "#06060C",
 };
 
 export default function RootLayout({
@@ -40,9 +48,19 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${inter.variable} min-h-screen bg-[#0A0A0F] font-sans text-[#F1F1F3] antialiased`}
+        className={`${outfit.variable} ${jakarta.variable} min-h-screen bg-[#06060C] font-sans text-[#EAEAF0] antialiased`}
       >
-        <main className="pb-[calc(70px+env(safe-area-inset-bottom,0px))]">
+        {/* Animated aurora gradient mesh */}
+        <div className="aurora-bg" aria-hidden="true">
+          <div className="aurora-orb aurora-orb--emerald" />
+          <div className="aurora-orb aurora-orb--rose" />
+        </div>
+
+        {/* Noise grain texture */}
+        <div className="noise-overlay" aria-hidden="true" />
+
+        {/* Content */}
+        <main className="relative z-10 pb-[calc(70px+env(safe-area-inset-bottom,0px))]">
           {children}
         </main>
         <BottomNav />

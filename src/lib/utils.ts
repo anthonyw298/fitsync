@@ -25,13 +25,12 @@ export function getToday(): string {
 }
 
 export function calculateBMR(
-  weightLbs: number,
+  weightKg: number,
   heightIn: number,
   age: number,
   gender: 'male' | 'female'
 ): number {
-  // Mifflin-St Jeor Equation (convert imperial to metric internally)
-  const weightKg = weightLbs * 0.453592
+  // Mifflin-St Jeor Equation (weight already in kg, convert height to cm)
   const heightCm = heightIn * 2.54
   if (gender === 'male') {
     return 10 * weightKg + 6.25 * heightCm - 5 * age + 5
@@ -53,7 +52,7 @@ export function calculateTDEE(bmr: number, activityLevel: string): number {
 export function calculateMacros(
   tdee: number,
   goal: string,
-  weightLbs: number
+  weightKg: number
 ): { calories: number; protein: number; carbs: number; fats: number } {
   let calories = tdee
 
@@ -69,8 +68,8 @@ export function calculateMacros(
       break
   }
 
-  // Protein: 1g per lb bodyweight
-  const protein = Math.round(weightLbs)
+  // Protein: 2.2g per kg bodyweight (≈ 1g per lb)
+  const protein = Math.round(weightKg * 2.2)
   // Fats: 25% of calories
   const fats = Math.round((calories * 0.25) / 9)
   // Carbs: remaining calories
@@ -96,10 +95,10 @@ export function getStreakEmoji(count: number): string {
 
 export function getMacroColor(type: string): string {
   switch (type) {
-    case 'protein': return '#8B5CF6'
-    case 'carbs': return '#3B82F6'
-    case 'fats': return '#F59E0B'
-    case 'calories': return '#10B981'
-    default: return '#6B7280'
+    case 'protein': return '#A78BFA'
+    case 'carbs': return '#38BDF8'
+    case 'fats': return '#FBBF24'
+    case 'calories': return '#34D399'
+    default: return '#6B6B8A'
   }
 }

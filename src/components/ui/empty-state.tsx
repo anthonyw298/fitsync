@@ -37,15 +37,15 @@ const EmptyState: React.FC<EmptyStateProps> = ({
     )}
   >
     {Icon && (
-      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1E1E2E]/70">
-        <Icon className="h-8 w-8 text-[#8888A0]" />
+      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/[0.04] border border-white/[0.06] shadow-[0_0_30px_rgba(167,139,250,0.06)]">
+        <Icon className="h-8 w-8 text-[#6B6B8A]" />
       </div>
     )}
 
-    <h3 className="text-base font-semibold text-[#F1F1F3]">{title}</h3>
+    <h3 className="font-display text-base font-semibold text-[#EAEAF0]">{title}</h3>
 
     {description && (
-      <p className="mt-1.5 max-w-xs text-sm leading-relaxed text-[#8888A0]">
+      <p className="mt-1.5 max-w-xs text-sm leading-relaxed text-[#6B6B8A]">
         {description}
       </p>
     )}

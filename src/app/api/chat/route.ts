@@ -9,7 +9,7 @@ const groq = createGroq({
 interface UserProfile {
   name?: string;
   age?: number;
-  weight_lbs?: number;
+  weight_kg?: number;
   height_in?: number;
   gender?: string;
   fitness_goal?: string;
@@ -73,9 +73,28 @@ interface ChatContext {
   supplements?: SupplementEntry[];
 }
 
+interface UIMessagePart {
+  type: string;
+  text?: string;
+  [key: string]: unknown;
+}
+
 interface ChatMessage {
   role: "user" | "assistant" | "system";
-  content: string;
+  content?: string;
+  parts?: UIMessagePart[];
+}
+
+/** Extract plain text from a message (handles both content string and parts array) */
+function extractContent(msg: ChatMessage): string {
+  if (msg.content) return msg.content;
+  if (msg.parts) {
+    return msg.parts
+      .filter((p) => p.type === "text" && p.text)
+      .map((p) => p.text!)
+      .join("");
+  }
+  return "";
 }
 
 function buildSystemPrompt(context: ChatContext): string {
@@ -92,7 +111,7 @@ function buildSystemPrompt(context: ChatContext): string {
     if (p.name) profileLines.push(`Name: ${p.name}`);
     if (p.age) profileLines.push(`Age: ${p.age}`);
     if (p.gender) profileLines.push(`Gender: ${p.gender}`);
-    if (p.weight_lbs) profileLines.push(`Weight: ${p.weight_lbs} lbs`);
+    if (p.weight_kg) profileLines.push(`Weight: ${p.weight_kg} kg`);
     if (p.height_in) profileLines.push(`Height: ${p.height_in} inches`);
     if (p.fitness_goal) profileLines.push(`Goal: ${p.fitness_goal}`);
     if (p.activity_level) profileLines.push(`Activity level: ${p.activity_level}`);
@@ -156,7 +175,7 @@ function buildSystemPrompt(context: ChatContext): string {
         const topExercises = w.exercises.slice(0, 4).map((e) => {
           let detail = e.name;
           if (e.sets && e.reps) detail += ` ${e.sets}x${e.reps}`;
-          if (e.weight) detail += ` @ ${e.weight} lbs`;
+          if (e.weight) detail += ` @ ${e.weight} kg`;
           return detail;
         });
         line += `\n  Exercises: ${topExercises.join(", ")}`;
@@ -204,7 +223,7 @@ function buildSystemPrompt(context: ChatContext): string {
 - If their sleep has been poor, factor that into workout/recovery recommendations
 - Suggest specific foods or meals to hit remaining macro targets
 - Keep responses focused and practical
-- Use imperial units unless the user specifies otherwise
+- Use metric units (kg, cm) unless the user specifies otherwise
 - If you don't have enough data to answer confidently, say so`
   );
 
@@ -238,15 +257,17 @@ export async function POST(request: NextRequest) {
     const result = streamText({
       model: groq("llama-3.3-70b-versatile"),
       system: systemPrompt,
-      messages: messages.map((msg) => ({
-        role: msg.role as "user" | "assistant",
-        content: msg.content,
-      })),
+      messages: messages
+        .map((msg) => ({
+          role: msg.role as "user" | "assistant",
+          content: extractContent(msg),
+        }))
+        .filter((msg) => msg.content.length > 0) as Array<{ role: "user"; content: string } | { role: "assistant"; content: string }>,
       maxOutputTokens: 1024,
       temperature: 0.7,
     });
 
-    return result.toTextStreamResponse();
+    return result.toUIMessageStreamResponse();
   } catch (error) {
     console.error("Chat API error:", error);
 

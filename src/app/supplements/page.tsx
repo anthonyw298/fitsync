@@ -156,7 +156,6 @@ export default function SupplementsPage() {
       dosage: dosage.trim(),
       unit,
       time_of_day: timeOfDay as 'morning' | 'afternoon' | 'evening' | 'with_meal',
-      active: true,
     })
 
     setAddingItem(false)
@@ -184,15 +183,15 @@ export default function SupplementsPage() {
   /* ──────────────────────────────────────────────────────────────────────── */
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F]">
+    <div className="min-h-screen bg-transparent">
       {/* ── Header ───────────────────────────────────────────────────────── */}
-      <header className="border-b border-[#1E1E2E] bg-[#13131A]/80 backdrop-blur-xl px-4 pt-[env(safe-area-inset-top,0px)]">
+      <header className="border-b border-white/[0.06] glass-dense px-4 pt-[env(safe-area-inset-top,0px)]">
         <div className="mx-auto flex h-14 max-w-lg items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#8B5CF6]/15">
-              <Pill className="h-5 w-5 text-[#8B5CF6]" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#A78BFA]/15">
+              <Pill className="h-5 w-5 text-[#A78BFA]" />
             </div>
-            <h1 className="text-base font-semibold text-[#F1F1F3]">
+            <h1 className="text-base font-semibold text-[#EAEAF0]">
               Supplements
             </h1>
           </div>
@@ -211,7 +210,7 @@ export default function SupplementsPage() {
               animate={{ rotate: 360 }}
               transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
             >
-              <Pill className="h-6 w-6 text-[#8B5CF6]" />
+              <Pill className="h-6 w-6 text-[#A78BFA]" />
             </motion.div>
           </div>
         )}
@@ -232,26 +231,26 @@ export default function SupplementsPage() {
         {/* ── Progress bar ───────────────────────────────────────────────── */}
         {totalCount > 0 && (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-            <Card>
+            <Card className="glow-primary">
               <CardContent className="pt-5">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-[#F1F1F3]">
+                  <span className="text-sm font-medium text-[#EAEAF0]">
                     Today&apos;s Progress
                   </span>
-                  <span className="text-sm font-bold tabular-nums text-[#8B5CF6]">
+                  <span className="text-sm font-bold tabular-nums text-[#A78BFA]">
                     {takenCount}/{totalCount}
                   </span>
                 </div>
                 <ProgressBar
                   value={progressPct}
-                  color={progressPct === 100 ? '#10B981' : '#8B5CF6'}
+                  color={progressPct === 100 ? '#34D399' : '#A78BFA'}
                   height="md"
                 />
                 {progressPct === 100 && (
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="mt-2 text-center text-xs text-[#10B981]"
+                    className="mt-2 text-center text-xs text-[#34D399]"
                   >
                     All supplements taken today!
                   </motion.p>
@@ -268,10 +267,10 @@ export default function SupplementsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <Card>
+            <Card className="gradient-border">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-[#8B5CF6]" />
+                  <Clock className="h-4 w-4 text-[#A78BFA]" />
                   Schedule
                 </CardTitle>
               </CardHeader>
@@ -286,10 +285,10 @@ export default function SupplementsPage() {
                     <div key={timeSlot} className="relative">
                       {/* Time label */}
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#1E1E2E]">
-                          <TimeIcon className="h-3.5 w-3.5 text-[#8888A0]" />
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.06]">
+                          <TimeIcon className="h-3.5 w-3.5 text-[#6B6B8A]" />
                         </div>
-                        <span className="text-xs font-semibold uppercase tracking-wider text-[#8888A0]">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-[#6B6B8A]">
                           {TIME_LABEL[timeSlot]}
                         </span>
                         <Badge variant="default" className="text-[9px]">
@@ -298,7 +297,7 @@ export default function SupplementsPage() {
                       </div>
 
                       {/* Supplement items */}
-                      <div className="ml-3.5 border-l border-[#1E1E2E] pl-5 space-y-2">
+                      <div className="ml-3.5 border-l border-white/[0.06] pl-5 space-y-2">
                         <AnimatePresence>
                           {items.map((supp) => {
                             const taken = takenMap.has(supp.id)
@@ -311,8 +310,8 @@ export default function SupplementsPage() {
                                 exit={{ opacity: 0, x: 12 }}
                                 className={`group flex items-center gap-3 rounded-xl border p-3 transition-all duration-200 ${
                                   taken
-                                    ? 'border-[#10B981]/30 bg-[#10B981]/5'
-                                    : 'border-[#1E1E2E] bg-[#0A0A0F] hover:border-[#8B5CF6]/30'
+                                    ? 'border-[#34D399]/30 bg-[#34D399]/5'
+                                    : 'border-white/[0.06] bg-transparent hover:border-[#A78BFA]/30'
                                 }`}
                               >
                                 {/* Checkbox */}
@@ -321,8 +320,8 @@ export default function SupplementsPage() {
                                   onClick={() => handleToggle(supp.id)}
                                   className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200 ${
                                     taken
-                                      ? 'bg-[#10B981] shadow-[0_0_12px_rgba(16,185,129,0.3)]'
-                                      : 'border border-[#1E1E2E] bg-transparent hover:border-[#8B5CF6]/40'
+                                      ? 'bg-[#34D399] shadow-[0_0_12px_rgba(16,185,129,0.3)]'
+                                      : 'border border-white/[0.06] bg-transparent hover:border-[#A78BFA]/40'
                                   }`}
                                 >
                                   {taken && (
@@ -341,13 +340,13 @@ export default function SupplementsPage() {
                                   <p
                                     className={`text-sm font-medium transition-all duration-200 ${
                                       taken
-                                        ? 'text-[#8888A0] line-through'
-                                        : 'text-[#F1F1F3]'
+                                        ? 'text-[#6B6B8A] line-through'
+                                        : 'text-[#EAEAF0]'
                                     }`}
                                   >
                                     {supp.name}
                                   </p>
-                                  <p className="text-xs text-[#8888A0]">
+                                  <p className="text-xs text-[#6B6B8A]">
                                     {supp.dosage} {supp.unit}
                                   </p>
                                 </div>
@@ -356,7 +355,7 @@ export default function SupplementsPage() {
                                 <button
                                   type="button"
                                   onClick={() => setDeleteConfirmId(supp.id)}
-                                  className="shrink-0 rounded-lg p-1.5 text-[#8888A0]/0 transition-all duration-200 group-hover:text-[#8888A0] hover:bg-red-500/10 hover:text-red-400"
+                                  className="shrink-0 rounded-lg p-1.5 text-[#6B6B8A]/0 transition-all duration-200 group-hover:text-[#6B6B8A] hover:bg-red-500/10 hover:text-red-400"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </button>
@@ -380,10 +379,10 @@ export default function SupplementsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Card>
+            <Card className="gradient-border">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-[#10B981]" />
+                  <Check className="h-4 w-4 text-[#34D399]" />
                   Today&apos;s Checklist
                 </CardTitle>
               </CardHeader>
@@ -400,16 +399,16 @@ export default function SupplementsPage() {
                       whileTap={{ scale: 0.98 }}
                       className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200 ${
                         taken
-                          ? 'border-[#10B981]/20 bg-[#10B981]/5'
-                          : 'border-[#1E1E2E] bg-[#0A0A0F] hover:border-[#8B5CF6]/30'
+                          ? 'border-[#34D399]/20 bg-[#34D399]/5'
+                          : 'border-white/[0.06] bg-transparent hover:border-[#A78BFA]/30'
                       }`}
                     >
                       {/* Checkbox */}
                       <div
                         className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-all duration-200 ${
                           taken
-                            ? 'bg-[#10B981]'
-                            : 'border border-[#1E1E2E]'
+                            ? 'bg-[#34D399]'
+                            : 'border border-white/[0.06]'
                         }`}
                       >
                         {taken && <Check className="h-3.5 w-3.5 text-white" />}
@@ -419,12 +418,12 @@ export default function SupplementsPage() {
                       <div className="flex-1 min-w-0">
                         <span
                           className={`text-sm font-medium ${
-                            taken ? 'text-[#8888A0] line-through' : 'text-[#F1F1F3]'
+                            taken ? 'text-[#6B6B8A] line-through' : 'text-[#EAEAF0]'
                           }`}
                         >
                           {supp.name}
                         </span>
-                        <span className="ml-1.5 text-xs text-[#8888A0]">
+                        <span className="ml-1.5 text-xs text-[#6B6B8A]">
                           {supp.dosage}{supp.unit}
                         </span>
                       </div>
@@ -455,7 +454,7 @@ export default function SupplementsPage() {
         <div className="space-y-5">
           {/* Quick presets */}
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-[#8888A0]">
+            <label className="text-xs font-semibold uppercase tracking-wider text-[#6B6B8A]">
               Quick Add
             </label>
             <div className="mt-2 grid grid-cols-3 gap-2">
@@ -467,14 +466,14 @@ export default function SupplementsPage() {
                   onClick={() => handlePreset(preset)}
                   className={`rounded-xl border p-2.5 text-center transition-all duration-150 ${
                     name === preset.name
-                      ? 'border-[#8B5CF6] bg-[#8B5CF6]/10'
-                      : 'border-[#1E1E2E] bg-[#0A0A0F] hover:border-[#8B5CF6]/30'
+                      ? 'border-[#A78BFA] bg-[#A78BFA]/10'
+                      : 'border-white/[0.06] bg-transparent hover:border-[#A78BFA]/30'
                   }`}
                 >
-                  <p className="text-xs font-semibold text-[#F1F1F3]">
+                  <p className="text-xs font-semibold text-[#EAEAF0]">
                     {preset.name}
                   </p>
-                  <p className="text-[10px] text-[#8888A0]">
+                  <p className="text-[10px] text-[#6B6B8A]">
                     {preset.dosage}{preset.unit}
                   </p>
                 </motion.button>
@@ -550,7 +549,7 @@ export default function SupplementsPage() {
               <Trash2 className="h-7 w-7 text-red-400" />
             </div>
           </div>
-          <p className="text-center text-sm text-[#8888A0]">
+          <p className="text-center text-sm text-[#6B6B8A]">
             This supplement will be removed from your daily tracking. This cannot be undone.
           </p>
           <div className="flex gap-3">

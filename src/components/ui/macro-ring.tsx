@@ -24,13 +24,13 @@ export interface MacroRingProps {
 const sizeConfig = {
   sm: { px: 64, stroke: 5, valueClass: "text-sm font-bold", labelClass: "text-[9px]" },
   md: { px: 96, stroke: 6, valueClass: "text-lg font-bold", labelClass: "text-[10px]" },
-  lg: { px: 140, stroke: 8, valueClass: "text-2xl font-bold", labelClass: "text-xs" },
+  lg: { px: 140, stroke: 8, valueClass: "text-2xl font-extrabold", labelClass: "text-xs" },
 } as const;
 
 const MacroRing: React.FC<MacroRingProps> = ({
   value,
   max,
-  color = "#8B5CF6",
+  color = "#A78BFA",
   size = "md",
   label,
   unit,
@@ -41,6 +41,9 @@ const MacroRing: React.FC<MacroRingProps> = ({
   const circumference = 2 * Math.PI * radius;
   const progress = max > 0 ? Math.min(value / max, 1) : 0;
   const offset = circumference * (1 - progress);
+
+  // Generate a unique gradient id for each instance
+  const gradientId = React.useId();
 
   return (
     <div
@@ -56,13 +59,20 @@ const MacroRing: React.FC<MacroRingProps> = ({
         viewBox={`0 0 ${px} ${px}`}
         className="-rotate-90"
       >
+        <defs>
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={color} stopOpacity="1" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.6" />
+          </linearGradient>
+        </defs>
+
         {/* Background track */}
         <circle
           cx={px / 2}
           cy={px / 2}
           r={radius}
           fill="none"
-          stroke="#1E1E2E"
+          stroke="rgba(255,255,255,0.06)"
           strokeWidth={stroke}
         />
 
@@ -72,34 +82,34 @@ const MacroRing: React.FC<MacroRingProps> = ({
           cy={px / 2}
           r={radius}
           fill="none"
-          stroke={color}
+          stroke={`url(#${gradientId})`}
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: offset }}
           transition={{ type: "spring", stiffness: 60, damping: 15 }}
-          style={{ filter: `drop-shadow(0 0 6px ${color}40)` }}
+          style={{ filter: `drop-shadow(0 0 8px ${color}50)` }}
         />
       </svg>
 
       {/* Center label */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={cn(valueClass, "tabular-nums text-[#F1F1F3]")}>
+        <span className={cn(valueClass, "font-display tabular-nums text-[#EAEAF0]")}>
           {Math.round(value)}
           {unit && (
-            <span className="ml-0.5 text-[0.6em] font-normal text-[#8888A0]">
+            <span className="ml-0.5 text-[0.55em] font-normal text-[#6B6B8A]">
               {unit}
             </span>
           )}
         </span>
         {label && (
-          <span className={cn(labelClass, "mt-0.5 text-[#8888A0] uppercase tracking-wider")}>
+          <span className={cn(labelClass, "mt-0.5 font-medium text-[#6B6B8A] uppercase tracking-wider")}>
             {label}
           </span>
         )}
         {max > 0 && (
-          <span className={cn(labelClass, "text-[#8888A0]/60 tabular-nums")}>
+          <span className={cn(labelClass, "text-[#6B6B8A]/50 tabular-nums")}>
             / {Math.round(max)}
           </span>
         )}

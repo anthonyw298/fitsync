@@ -8,7 +8,7 @@ const groq = createGroq({
 
 interface UserProfile {
   age?: number;
-  weight_lbs?: number;
+  weight_kg?: number;
   height_in?: number;
   gender?: string;
   fitness_goal?: string; // "cut" | "bulk" | "maintain"
@@ -88,13 +88,13 @@ function summarizeCurrentPlan(plan: WorkoutPlan | null): string {
     .map((d) => {
       const exercises = d.exercises
         .slice(0, 3)
-        .map((e) => `${e.name} ${e.sets}x${e.reps}${e.weight ? ` @${e.weight} lbs` : ""}`)
+        .map((e) => `${e.name} ${e.sets}x${e.reps}${e.weight ? ` @${e.weight} kg` : ""}`)
         .join(", ");
       return `${d.day} (${d.name}): ${exercises}${d.exercises.length > 3 ? ` +${d.exercises.length - 3} more` : ""}`;
     })
     .join("\n");
 
-  return `Current plan (apply progressive overload — increase weight by 2.5-5% or add 1-2 reps where possible):\n${summary}`;
+  return `Current plan (apply progressive overload - increase weight by 2.5-5% or add 1-2 reps where possible):\n${summary}`;
 }
 
 function buildPrompt(
@@ -114,7 +114,7 @@ function buildPrompt(
   // User stats
   if (profile.age) lines.push(`Age: ${profile.age}`);
   if (profile.gender) lines.push(`Gender: ${profile.gender}`);
-  if (profile.weight_lbs) lines.push(`Weight: ${profile.weight_lbs} lbs`);
+  if (profile.weight_kg) lines.push(`Weight: ${profile.weight_kg} kg`);
   if (profile.height_in) lines.push(`Height: ${profile.height_in} inches`);
   if (profile.fitness_goal) lines.push(`Goal: ${profile.fitness_goal}`);
   if (profile.experience_level) lines.push(`Experience: ${profile.experience_level}`);
