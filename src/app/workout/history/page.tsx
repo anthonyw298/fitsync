@@ -114,7 +114,7 @@ function HistoryEntry({ log }: { log: WorkoutLog }) {
               <p className="text-sm font-semibold tabular-nums text-[#A78BFA]">
                 {volume.toLocaleString()}
               </p>
-              <p className="text-[10px] text-[#6B6B8A]">lbs vol</p>
+              <p className="text-[10px] text-[#6B6B8A]">kg vol</p>
             </div>
             {expanded ? (
               <ChevronUp className="h-4 w-4 text-[#6B6B8A]" />
@@ -208,7 +208,7 @@ function ChartTooltip({
     <div className="rounded-lg border border-white/[0.06] bg-[#0E0E18] px-3 py-2 shadow-lg">
       <p className="text-xs text-[#6B6B8A]">{label}</p>
       <p className="text-sm font-semibold text-[#A78BFA]">
-        {payload[0].value.toLocaleString()} lbs
+        {payload[0].value.toLocaleString()} kg
       </p>
     </div>
   )
@@ -266,7 +266,7 @@ export default function WorkoutHistoryPage() {
                     {totalWeeklyVolume.toLocaleString()}
                   </p>
                   <p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">
-                    Weekly Volume (lbs)
+                    Weekly Volume (kg)
                   </p>
                 </div>
                 <div>

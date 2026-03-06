@@ -47,6 +47,23 @@ interface WorkoutPlan {
   created_at?: string;
 }
 
+interface RecentWorkout {
+  date?: string;
+  workout_name?: string;
+  exercises?: Array<{
+    name: string;
+    sets: Array<{ reps: number; weight: number; completed: boolean }>;
+  }>;
+  duration_minutes?: number;
+  completed?: boolean;
+}
+
+interface NutritionSummary {
+  avgDailyCalories: number;
+  avgDailyProtein: number;
+  daysTracked: number;
+}
+
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 function analyzeSleepQuality(sleepData: SleepLog[]): {
@@ -97,10 +114,32 @@ function summarizeCurrentPlan(plan: WorkoutPlan | null): string {
   return `Current plan (apply progressive overload - increase weight by 2.5-5% or add 1-2 reps where possible):\n${summary}`;
 }
 
+function summarizeRecentWorkouts(workouts: RecentWorkout[]): string {
+  if (!workouts || workouts.length === 0) {
+    return "No recent workout history available.";
+  }
+
+  const lines: string[] = [];
+  for (const w of workouts.slice(0, 7)) {
+    if (!w.exercises || w.exercises.length === 0) continue;
+    const exerciseSummaries = w.exercises.slice(0, 4).map((ex) => {
+      const completedSets = ex.sets?.filter((s) => s.completed) ?? [];
+      const maxWeight = completedSets.length > 0 ? Math.max(...completedSets.map((s) => s.weight)) : 0;
+      const avgReps = completedSets.length > 0 ? Math.round(completedSets.reduce((s, c) => s + c.reps, 0) / completedSets.length) : 0;
+      return `${ex.name} ${completedSets.length}x${avgReps}${maxWeight > 0 ? ` @${maxWeight}kg` : ""}`;
+    }).join(", ");
+    const extras = w.exercises.length > 4 ? ` +${w.exercises.length - 4} more` : "";
+    lines.push(`${w.date ?? "?"} (${w.workout_name ?? "Workout"}): ${exerciseSummaries}${extras}`);
+  }
+  return lines.join("\n");
+}
+
 function buildPrompt(
   profile: UserProfile,
   sleepData: SleepLog[],
-  currentPlan: WorkoutPlan | null
+  currentPlan: WorkoutPlan | null,
+  recentWorkouts?: RecentWorkout[],
+  nutritionSummary?: NutritionSummary | null
 ): string {
   const sleep = analyzeSleepQuality(sleepData);
   const planSummary = summarizeCurrentPlan(currentPlan);
@@ -130,6 +169,26 @@ function buildPrompt(
   lines.push(`## Sleep Analysis (last 7 days)`);
   lines.push(`Average: ${sleep.avgHours.toFixed(1)}h/night${sleep.avgQuality > 0 ? `, quality: ${sleep.avgQuality.toFixed(1)}/5` : ""}`);
   lines.push(`Adjustment: ${sleep.recommendation}`);
+
+  // Nutrition context
+  if (nutritionSummary && nutritionSummary.daysTracked > 0) {
+    lines.push("");
+    lines.push(`## Nutrition (last ${nutritionSummary.daysTracked} days)`);
+    lines.push(`Average daily intake: ${nutritionSummary.avgDailyCalories} kcal, ${nutritionSummary.avgDailyProtein}g protein`);
+    const proteinPerKg = profile.weight_kg ? (nutritionSummary.avgDailyProtein / profile.weight_kg).toFixed(1) : "?";
+    lines.push(`Protein per kg body weight: ${proteinPerKg}g/kg`);
+    if (profile.weight_kg && nutritionSummary.avgDailyProtein / profile.weight_kg < 1.6) {
+      lines.push(`Note: Protein intake is below 1.6g/kg — consider moderate volume to avoid excessive muscle damage while recovery nutrition is suboptimal.`);
+    }
+  }
+
+  // Recent workout history for progressive overload
+  if (recentWorkouts && recentWorkouts.length > 0) {
+    lines.push("");
+    lines.push(`## Recent Workout History (for progressive overload reference)`);
+    lines.push(summarizeRecentWorkouts(recentWorkouts));
+    lines.push(`Use this data to inform progressive overload: increase weight by 2.5-5% or add 1-2 reps where the user has been consistently completing all prescribed reps.`);
+  }
 
   lines.push("");
   lines.push(`## Previous Plan`);
@@ -371,10 +430,14 @@ export async function POST(request: NextRequest) {
       profile,
       sleepData,
       currentPlan,
+      recentWorkouts,
+      nutritionSummary,
     } = body as {
       profile?: UserProfile;
       sleepData?: SleepLog[];
       currentPlan?: WorkoutPlan | null;
+      recentWorkouts?: RecentWorkout[];
+      nutritionSummary?: NutritionSummary | null;
     };
 
     if (!profile) {
@@ -384,7 +447,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userPrompt = buildPrompt(profile, sleepData ?? [], currentPlan ?? null);
+    const userPrompt = buildPrompt(profile, sleepData ?? [], currentPlan ?? null, recentWorkouts, nutritionSummary);
 
     const result = await generateText({
       model: groq("llama-3.3-70b-versatile"),

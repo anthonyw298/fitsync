@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fitsync-v1';
+const CACHE_NAME = 'fitsync-v3';
 const urlsToCache = [
   '/',
   '/food',
@@ -43,7 +43,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first strategy for static assets
+  // Network-first strategy for pages (HTML navigation requests)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((fetchResponse) => {
+          if (fetchResponse.ok) {
+            const responseClone = fetchResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return fetchResponse;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Cache-first strategy for static assets (JS, CSS, images)
   event.respondWith(
     caches.match(event.request).then((response) =>
       response ||

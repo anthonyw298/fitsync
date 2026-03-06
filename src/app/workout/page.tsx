@@ -406,9 +406,39 @@ export default function WorkoutPage() {
     if (!profile) return; setGenerating(true)
     try {
       const sleepPayload = recentSleep.slice(0, 7).map((s) => ({ date: s.date, hours: s.duration_hours, quality: s.quality }))
+
+      // Fetch recent workout logs and food data for full context
+      const [logsRes, foodRes] = await Promise.all([
+        fetch('/api/data/workout/logs?limit=14').then((r) => r.json()).catch(() => ({ data: [] })),
+        fetch('/api/data/food?range=7').then((r) => r.json()).catch(() => ({ data: [] })),
+      ])
+      const recentWorkoutLogs = (logsRes.data ?? []).map((l: Record<string, unknown>) => ({
+        date: l.date, workout_name: l.workout_name, exercises: l.exercises, duration_minutes: l.duration_minutes, completed: l.completed,
+      }))
+      const recentFood = (foodRes.data ?? []) as Record<string, unknown>[]
+      // Summarize nutrition: avg daily cals/protein over last 7 days
+      const foodByDate: Record<string, { calories: number; protein: number }> = {}
+      for (const f of recentFood) {
+        const d = f.date as string
+        if (!foodByDate[d]) foodByDate[d] = { calories: 0, protein: 0 }
+        foodByDate[d].calories += (f.calories as number) ?? 0
+        foodByDate[d].protein += (f.protein_g as number) ?? 0
+      }
+      const foodDays = Object.values(foodByDate)
+      const nutritionSummary = foodDays.length > 0 ? {
+        avgDailyCalories: Math.round(foodDays.reduce((s, d) => s + d.calories, 0) / foodDays.length),
+        avgDailyProtein: Math.round(foodDays.reduce((s, d) => s + d.protein, 0) / foodDays.length),
+        daysTracked: foodDays.length,
+      } : null
+
       const res = await fetch('/api/generate-plan', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profile, sleepData: sleepPayload, currentPlan: activePlan ? { days: activePlan.plan_data, name: activePlan.split_type } : null }),
+        body: JSON.stringify({
+          profile, sleepData: sleepPayload,
+          currentPlan: activePlan ? { days: activePlan.plan_data, name: activePlan.split_type } : null,
+          recentWorkouts: recentWorkoutLogs.slice(0, 10),
+          nutritionSummary,
+        }),
       })
       const data = await res.json()
       if (data.plan) {
@@ -699,7 +729,7 @@ export default function WorkoutPage() {
 
         {/* Stats */}
         <Card><CardContent><div className="grid grid-cols-3 gap-4 text-center">
-          <div><p className="text-lg font-bold tabular-nums text-[#A78BFA]">{totalVolume.toLocaleString()}</p><p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Volume (lbs)</p></div>
+          <div><p className="text-lg font-bold tabular-nums text-[#A78BFA]">{totalVolume.toLocaleString()}</p><p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Volume (kg)</p></div>
           <div><p className="text-lg font-bold tabular-nums text-[#38BDF8]">{durationMinutes}</p><p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Minutes</p></div>
           <div><p className="text-lg font-bold tabular-nums text-[#34D399]">{estimatedCalories}</p><p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Calories</p></div>
         </div></CardContent></Card>
@@ -713,7 +743,7 @@ export default function WorkoutPage() {
       <Modal isOpen={showSummary && !showCompletion} onClose={() => setShowSummary(false)} title="Workout Summary">
         <div className="flex flex-col gap-5">
           <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-xl border border-white/[0.06] bg-[#0E0E18] p-4 text-center"><p className="text-2xl font-bold text-[#A78BFA]">{totalVolume.toLocaleString()}</p><p className="mt-1 text-xs text-[#6B6B8A]">Total Volume (lbs)</p></div>
+            <div className="rounded-xl border border-white/[0.06] bg-[#0E0E18] p-4 text-center"><p className="text-2xl font-bold text-[#A78BFA]">{totalVolume.toLocaleString()}</p><p className="mt-1 text-xs text-[#6B6B8A]">Total Volume (kg)</p></div>
             <div className="rounded-xl border border-white/[0.06] bg-[#0E0E18] p-4 text-center"><p className="text-2xl font-bold text-[#38BDF8]">{durationMinutes}</p><p className="mt-1 text-xs text-[#6B6B8A]">Duration (min)</p></div>
             <div className="rounded-xl border border-white/[0.06] bg-[#0E0E18] p-4 text-center"><p className="text-2xl font-bold text-[#34D399]">{estimatedCalories}</p><p className="mt-1 text-xs text-[#6B6B8A]">Est. Calories</p></div>
             <div className="rounded-xl border border-white/[0.06] bg-[#0E0E18] p-4 text-center"><p className="text-2xl font-bold text-[#FBBF24]">{totalSets}</p><p className="mt-1 text-xs text-[#6B6B8A]">Sets Completed</p></div>
@@ -722,7 +752,7 @@ export default function WorkoutPage() {
             {sessionExercises.map((ex, i) => {
               const exS = exerciseSets[i] ?? []; const completed = exS.filter((s) => s.completed)
               const exV = completed.reduce((s, c) => s + c.reps * c.weight, 0)
-              return <div key={`summary-${i}`} className="flex items-center justify-between rounded-lg bg-[#0E0E18] px-3 py-2"><span className="text-sm text-[#EAEAF0]">{ex.name}</span><span className="text-xs tabular-nums text-[#6B6B8A]">{completed.length}/{exS.length} sets · {exV.toLocaleString()} lbs</span></div>
+              return <div key={`summary-${i}`} className="flex items-center justify-between rounded-lg bg-[#0E0E18] px-3 py-2"><span className="text-sm text-[#EAEAF0]">{ex.name}</span><span className="text-xs tabular-nums text-[#6B6B8A]">{completed.length}/{exS.length} sets · {exV.toLocaleString()} kg</span></div>
             })}
           </div>
           {!allComplete && <p className="text-center text-xs text-[#FBBF24]">Some sets are incomplete. You can still save your progress.</p>}
