@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ user: { id: user.id, email: user.email } });
   } catch (error) {
     console.error("Signup error:", error);
-    return NextResponse.json({ error: "Failed to create account" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: `Failed to create account: ${message}` }, { status: 500 });
   }
 }
