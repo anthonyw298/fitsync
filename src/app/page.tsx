@@ -31,7 +31,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ProgressBar } from '@/components/ui/progress-bar'
 import PageHeader from '@/components/layout/page-header'
-import UserMenu from '@/components/layout/user-menu'
+
 import { getToday } from '@/lib/utils'
 import type { WaterEntry, WeightLog } from '@/lib/database.types'
 
@@ -299,7 +299,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen">
-      <PageHeader title="FitSync" subtitle="Dashboard" rightAction={<UserMenu />} />
+      <PageHeader title="FitSync" subtitle="Dashboard" />
 
       <motion.div
         className="mx-auto max-w-lg space-y-5 px-4 py-5"

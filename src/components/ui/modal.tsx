@@ -6,15 +6,10 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface ModalProps {
-  /** Whether the modal is visible. */
   isOpen: boolean;
-  /** Called when the user wants to close the modal (backdrop click, X, or Escape). */
   onClose: () => void;
-  /** Optional title rendered at the top of the sheet. */
   title?: string;
-  /** Content rendered inside the sheet body. */
   children: React.ReactNode;
-  /** Extra class names on the sheet panel. */
   className?: string;
 }
 
@@ -44,16 +39,12 @@ const Modal: React.FC<ModalProps> = ({
   children,
   className,
 }) => {
-  const scrollRef = React.useRef<HTMLDivElement>(null);
-
   // Close on Escape key
   React.useEffect(() => {
     if (!isOpen) return;
-
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
-
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [isOpen, onClose]);
@@ -62,9 +53,8 @@ const Modal: React.FC<ModalProps> = ({
   React.useEffect(() => {
     if (!isOpen) return;
 
-    // Save current scroll position and body styles
     const scrollY = window.scrollY;
-    const originalStyles = {
+    const orig = {
       position: document.body.style.position,
       top: document.body.style.top,
       left: document.body.style.left,
@@ -73,7 +63,6 @@ const Modal: React.FC<ModalProps> = ({
       width: document.body.style.width,
     };
 
-    // Lock the body in place
     document.body.style.position = "fixed";
     document.body.style.top = `-${scrollY}px`;
     document.body.style.left = "0";
@@ -82,49 +71,34 @@ const Modal: React.FC<ModalProps> = ({
     document.body.style.width = "100%";
 
     return () => {
-      // Restore body styles
-      document.body.style.position = originalStyles.position;
-      document.body.style.top = originalStyles.top;
-      document.body.style.left = originalStyles.left;
-      document.body.style.right = originalStyles.right;
-      document.body.style.overflow = originalStyles.overflow;
-      document.body.style.width = originalStyles.width;
-      // Restore scroll position
+      document.body.style.position = orig.position;
+      document.body.style.top = orig.top;
+      document.body.style.left = orig.left;
+      document.body.style.right = orig.right;
+      document.body.style.overflow = orig.overflow;
+      document.body.style.width = orig.width;
       window.scrollTo(0, scrollY);
     };
   }, [isOpen]);
 
-  // Prevent touch events on the backdrop from scrolling anything
-  const handleBackdropTouch = React.useCallback(
-    (e: React.TouchEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-    },
-    []
-  );
-
   return (
     <AnimatePresence>
       {isOpen && (
-        <div
-          className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center"
-          style={{ touchAction: "none" }}
-        >
-          {/* Backdrop – blocks all touch on background */}
+        <>
+          {/* Full-screen backdrop – touch-action:none blocks background scroll */}
           <motion.div
-            className="absolute inset-0 bg-black/70 backdrop-blur-md"
+            className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-md"
             variants={overlayVariants}
             initial="hidden"
             animate="visible"
             exit="hidden"
             onClick={onClose}
-            onTouchMove={handleBackdropTouch}
+            style={{ touchAction: "none" }}
             aria-hidden
           />
 
-          {/* Sheet panel */}
+          {/* Sheet – sits above backdrop, allows its own scrolling */}
           <motion.div
-            ref={scrollRef}
             role="dialog"
             aria-modal="true"
             aria-label={title ?? "Modal"}
@@ -133,20 +107,17 @@ const Modal: React.FC<ModalProps> = ({
             animate="visible"
             exit="exit"
             className={cn(
-              "relative z-10 w-full max-w-lg",
+              "fixed bottom-0 left-0 right-0 z-[101] mx-auto w-full max-w-lg",
+              "sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2",
               "rounded-t-3xl sm:rounded-3xl",
               "glass-dense",
               "shadow-[0_-8px_60px_rgba(0,0,0,0.6),0_0_40px_rgba(167,139,250,0.04)]",
               "flex flex-col",
-              "max-h-[90vh] sm:max-h-[85vh]",
+              "max-h-[92vh] sm:max-h-[85vh]",
               className
             )}
-            style={{
-              touchAction: "pan-y",
-              WebkitOverflowScrolling: "touch",
-            }}
           >
-            {/* Drag handle (mobile affordance) */}
+            {/* Drag handle */}
             <div className="flex justify-center pt-3 pb-0 sm:hidden shrink-0">
               <div className="h-1 w-10 rounded-full bg-white/10" />
             </div>
@@ -168,7 +139,7 @@ const Modal: React.FC<ModalProps> = ({
               </div>
             )}
 
-            {/* Close button when there is no title */}
+            {/* Close button when no title */}
             {!title && (
               <button
                 type="button"
@@ -180,20 +151,17 @@ const Modal: React.FC<ModalProps> = ({
               </button>
             )}
 
-            {/* Scrollable body */}
+            {/* Scrollable body – NOT a child of the touch-action:none backdrop */}
             <div
-              className="flex-1 overflow-y-auto overscroll-contain p-5"
-              style={{
-                WebkitOverflowScrolling: "touch",
-              }}
+              className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 pb-8"
+              style={{ WebkitOverflowScrolling: "touch" }}
             >
-              {/* Bottom safe-area padding for home indicator */}
               <div className="pb-[env(safe-area-inset-bottom,0px)]">
                 {children}
               </div>
             </div>
           </motion.div>
-        </div>
+        </>
       )}
     </AnimatePresence>
   );
