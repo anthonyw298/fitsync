@@ -512,20 +512,26 @@ export async function getCalendarSummary(
   const targetCal = profile?.daily_calories ?? 2500;
   const totalSupps = supps.length;
 
+  /** Normalize "2026-03-06T00:00:00.000Z" → "2026-03-06" */
+  const norm = (d: unknown): string => {
+    const s = String(d);
+    return s.length > 10 ? s.slice(0, 10) : s;
+  };
+
   // Build lookup maps
   const workoutMap = new Map<string, boolean>();
-  for (const w of workouts) workoutMap.set(String(w.date), !!w.completed);
+  for (const w of workouts) workoutMap.set(norm(w.date), !!w.completed);
 
   const foodMap = new Map<string, number>();
-  for (const f of food) foodMap.set(String(f.date), Number(f.total_cal) || 0);
+  for (const f of food) foodMap.set(norm(f.date), Number(f.total_cal) || 0);
 
   const sleepMap = new Map<string, number>();
-  for (const s of sleep) sleepMap.set(String(s.date), Number(s.duration_hours) || 0);
+  for (const s of sleep) sleepMap.set(norm(s.date), Number(s.duration_hours) || 0);
 
   const suppMap = new Map<string, number>();
   for (const l of suppLogs) {
     if (l.taken) {
-      const d = String(l.date);
+      const d = norm(l.date);
       suppMap.set(d, (suppMap.get(d) ?? 0) + 1);
     }
   }

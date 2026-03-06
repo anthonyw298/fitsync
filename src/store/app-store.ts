@@ -274,8 +274,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   workoutLogs: [],
   fetchWorkoutLogs: async (limit = 50) => {
-    const data = await api<WorkoutLog[]>(`/api/data/workout/logs?limit=${limit}`)
-    set({ workoutLogs: data ?? [] })
+    const raw = await api<WorkoutLog[]>(`/api/data/workout/logs?limit=${limit}`)
+    const data = (raw ?? []).map((w) => ({ ...w, date: normalizeDate(w.date) }))
+    set({ workoutLogs: data })
   },
 
   // Sleep
