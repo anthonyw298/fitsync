@@ -28,10 +28,17 @@ const FALLBACK_NUTRITION: NutritionData = {
   confidence: 0,
 };
 
-const BASE_SYSTEM_PROMPT =
-  "You are a nutrition expert. Analyze the food in this image. Return a JSON object with: food_name (string), calories (number), protein_g (number), carbs_g (number), fats_g (number), fiber_g (number), serving_size (string), confidence (number 0-1). Only return valid JSON, no other text.";
+const BASE_SYSTEM_PROMPT = `You are a precise nutrition calculator. Your job is to estimate macronutrients as accurately as possible using USDA standard values.
+
+CRITICAL RULES:
+1. If the user provides a description of the food and portions, use that as the primary source — not just the image.
+2. Calculate macros based on actual portion sizes. Do NOT underestimate.
+3. Use standard nutritional data (USDA) for calculations.
+4. Return ONLY a valid JSON object with these fields: food_name (string), calories (number), protein_g (number), carbs_g (number), fats_g (number), fiber_g (number), serving_size (string), confidence (number 0-1).
+5. No markdown, no explanation, no other text — just the JSON object.`;
 
 interface FoodHints {
+  description?: string;
   brand?: string;
   ingredients?: string;
   amount?: string;
@@ -40,19 +47,32 @@ interface FoodHints {
 }
 
 function buildUserPrompt(hints?: FoodHints): string {
-  const parts: string[] = ["Analyze this food image and provide the nutritional information as JSON."];
+  const parts: string[] = [];
 
-  if (hints && Object.keys(hints).length > 0) {
+  if (hints?.description) {
+    parts.push(`The user describes this meal as: "${hints.description}"`);
     parts.push("");
-    parts.push("The user provided these additional details to help with accuracy:");
+    parts.push("Use this description as the PRIMARY source of truth for what the food is and how much there is. The image is secondary — use it only to confirm or supplement the description.");
+  } else {
+    parts.push("Analyze this food image and provide the nutritional information as JSON.");
+  }
+
+  if (hints && Object.keys(hints).filter(k => k !== 'description').length > 0) {
+    parts.push("");
+    parts.push("Additional details from the user (use these for accuracy):");
     if (hints.brand) parts.push(`- Brand/Restaurant: ${hints.brand}`);
     if (hints.ingredients) parts.push(`- Known ingredients: ${hints.ingredients}`);
-    if (hints.amount) parts.push(`- Portion size: ${hints.amount}`);
-    if (hints.calories) parts.push(`- Known calories: ${hints.calories} kcal (use this exact value)`);
-    if (hints.protein) parts.push(`- Known protein: ${hints.protein}g (use this exact value)`);
-    parts.push("");
-    parts.push("Use the user-provided values where given. For any values not provided, estimate them based on the image and the context above.");
+    if (hints.amount) parts.push(`- Portion size/amount: ${hints.amount}. IMPORTANT: Calculate all macros based on this exact portion size.`);
+    if (hints.calories) parts.push(`- Known calories: ${hints.calories} kcal — use this EXACT value`);
+    if (hints.protein) parts.push(`- Known protein: ${hints.protein}g — use this EXACT value`);
   }
+
+  parts.push("");
+  parts.push("IMPORTANT: Be accurate with portion sizes. Use standard USDA nutritional data. For reference:");
+  parts.push("- 1 cup cooked chicken breast ≈ 140g = ~43g protein, ~0g carbs, ~5g fat, ~230 cal");
+  parts.push("- 1 cup cooked white rice ≈ 186g = ~4g protein, ~45g carbs, ~0.4g fat, ~205 cal");
+  parts.push("- 1 large egg = ~6g protein, ~0.6g carbs, ~5g fat, ~72 cal");
+  parts.push("Scale all values proportionally to the actual portion described or shown.");
 
   return parts.join("\n");
 }

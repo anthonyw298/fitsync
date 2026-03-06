@@ -1011,6 +1011,9 @@ function AddFoodModal({
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
   const [analysisError, setAnalysisError] = useState<string | null>(null)
 
+  // Description field (primary context for AI)
+  const [hintDescription, setHintDescription] = useState('')
+
   // Optional photo context hints
   const [hintBrand, setHintBrand] = useState('')
   const [hintIngredients, setHintIngredients] = useState('')
@@ -1126,6 +1129,7 @@ function AddFoodModal({
     try {
       // Build optional hints object
       const hints: Record<string, string> = {}
+      if (hintDescription.trim()) hints.description = hintDescription.trim()
       if (hintBrand.trim()) hints.brand = hintBrand.trim()
       if (hintIngredients.trim()) hints.ingredients = hintIngredients.trim()
       if (hintAmount.trim()) hints.amount = hintAmount.trim()
@@ -1409,16 +1413,22 @@ function AddFoodModal({
               </div>
             )}
 
-            {/* Optional context hints (before analysis) */}
+            {/* Description + optional hints (before analysis) */}
             {!analysisResult && !analyzing && (
               <div className="space-y-3">
+                <Input
+                  label="Describe your meal (recommended)"
+                  placeholder="e.g. 2 cups chicken breast, 2 cups white rice"
+                  value={hintDescription}
+                  onChange={(e) => setHintDescription(e.target.value)}
+                />
                 <button
                   onClick={() => setHintsExpanded(!hintsExpanded)}
                   className="flex w-full items-center justify-between rounded-xl border border-white/[0.06] bg-[#0E0E18] px-3 py-2.5 text-sm text-[#6B6B8A] transition-colors hover:border-[#A78BFA]/30"
                 >
                   <span className="flex items-center gap-2">
                     <Edit3 className="h-3.5 w-3.5" />
-                    Add details for better accuracy
+                    More details (brand, calories, etc.)
                   </span>
                   <motion.div
                     animate={{ rotate: hintsExpanded ? 0 : -90 }}
