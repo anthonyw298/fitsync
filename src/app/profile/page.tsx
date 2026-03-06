@@ -135,7 +135,7 @@ export default function ProfilePage() {
   /* ── Form state ────────────────────────────────────────────────────────── */
   const [age, setAge] = useState(25)
   const [heightIn, setHeightIn] = useState(69)
-  const [weightKg, setWeightKg] = useState(75)
+  const [weightLbs, setWeightLbs] = useState(165)
   const [gender, setGender] = useState<'male' | 'female'>('male')
   const [activityLevel, setActivityLevel] = useState('moderate')
   const [fitnessGoal, setFitnessGoal] = useState<'cut' | 'maintain' | 'bulk'>('maintain')
@@ -165,7 +165,7 @@ export default function ProfilePage() {
     if (profile) {
       setAge(profile.age)
       setHeightIn(profile.height_in)
-      setWeightKg(profile.weight_kg)
+      setWeightLbs(Math.round(profile.weight_kg * 2.205))
       setGender(profile.gender)
       setActivityLevel(profile.activity_level)
       setFitnessGoal(profile.fitness_goal)
@@ -177,11 +177,12 @@ export default function ProfilePage() {
 
   /* ── Live macro calculation ────────────────────────────────────────────── */
   const macros = useMemo(() => {
-    if (!age || !heightIn || !weightKg) return null
-    const bmr = calculateBMR(weightKg, heightIn, age, gender)
+    if (!age || !heightIn || !weightLbs) return null
+    const weightKgCalc = weightLbs / 2.205
+    const bmr = calculateBMR(weightKgCalc, heightIn, age, gender)
     const tdee = calculateTDEE(bmr, activityLevel)
-    return calculateMacros(tdee, fitnessGoal, weightKg)
-  }, [age, heightIn, weightKg, gender, activityLevel, fitnessGoal])
+    return calculateMacros(tdee, fitnessGoal, weightKgCalc)
+  }, [age, heightIn, weightLbs, gender, activityLevel, fitnessGoal])
 
   /* ── Chart data (last 30 days, ascending by date) ──────────────────────── */
   const chartData = useMemo(() => {
@@ -220,7 +221,7 @@ export default function ProfilePage() {
     await updateProfile({
       age,
       height_in: heightIn,
-      weight_kg: weightKg,
+      weight_kg: Math.round((weightLbs / 2.205) * 10) / 10,
       gender,
       activity_level: activityLevel as 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active',
       fitness_goal: fitnessGoal,
@@ -339,7 +340,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="rounded-xl bg-transparent p-3 border border-white/[0.06]">
                     <p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Weight</p>
-                    <p className="mt-0.5 text-lg font-bold text-[#EAEAF0] tabular-nums">{profile.weight_kg}<span className="text-xs font-normal text-[#6B6B8A] ml-0.5">kg</span></p>
+                    <p className="mt-0.5 text-lg font-bold text-[#EAEAF0] tabular-nums">{Math.round(profile.weight_kg * 2.205)}<span className="text-xs font-normal text-[#6B6B8A] ml-0.5">lbs</span></p>
                   </div>
                   <div className="rounded-xl bg-transparent p-3 border border-white/[0.06]">
                     <p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Height</p>
@@ -619,14 +620,14 @@ export default function ProfilePage() {
                   <Weight className="h-5 w-5 text-[#6B6B8A]" />
                 </div>
                 <Input
-                  label="Weight (kg)"
+                  label="Weight (lbs)"
                   type="number"
-                  min={30}
-                  max={300}
-                  step={0.1}
-                  value={weightKg}
-                  onChange={(e) => setWeightKg(Number(e.target.value))}
-                  placeholder="75"
+                  min={66}
+                  max={660}
+                  step={1}
+                  value={weightLbs}
+                  onChange={(e) => setWeightLbs(Number(e.target.value))}
+                  placeholder="165"
                 />
               </div>
 

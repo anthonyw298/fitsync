@@ -34,8 +34,8 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Modal } from '@/components/ui/modal'
 import PageHeader from '@/components/layout/page-header'
-import { db } from '@/lib/local-db'
 import { getToday } from '@/lib/utils'
+import { db } from '@/lib/local-db'
 import type { Exercise, ActualSet, WorkoutDay, LoggedExercise, SavedWorkout, CustomExerciseEntry } from '@/lib/database.types'
 import {
   EXERCISES,

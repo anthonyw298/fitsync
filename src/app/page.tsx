@@ -281,6 +281,15 @@ export default function DashboardPage() {
             Get Started
             <ChevronRight className="h-4 w-4" />
           </Link>
+          <button
+            onClick={async () => {
+              await fetch('/api/auth/logout', { method: 'POST' })
+              window.location.href = '/login'
+            }}
+            className="mt-3 text-xs text-[#6B6B8A] underline underline-offset-2 transition-colors hover:text-[#EAEAF0]"
+          >
+            Not you? Sign out
+          </button>
         </motion.div>
       </div>
     )
