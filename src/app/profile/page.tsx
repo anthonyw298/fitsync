@@ -165,24 +165,23 @@ export default function ProfilePage() {
     if (profile) {
       setAge(profile.age)
       setHeightIn(profile.height_in)
-      setWeightLbs(Math.round(profile.weight_kg * 2.205))
+      setWeightKg(profile.weight_kg)
       setGender(profile.gender)
       setActivityLevel(profile.activity_level)
       setFitnessGoal(profile.fitness_goal)
       setWorkoutDays(profile.workout_days_per_week)
-      setGoalWeight(profile.goal_weight_kg ?? '')
+      setGoalWeight(profile.goal_weight_lbs ?? '')
       setDailyWaterMl(profile.daily_water_ml ?? 2500)
     }
   }, [profile])
 
   /* ── Live macro calculation ────────────────────────────────────────────── */
   const macros = useMemo(() => {
-    if (!age || !heightIn || !weightLbs) return null
-    const weightKgCalc = weightLbs / 2.205
-    const bmr = calculateBMR(weightKgCalc, heightIn, age, gender)
+    if (!age || !heightIn || !weightKg) return null
+    const bmr = calculateBMR(weightKg, heightIn, age, gender)
     const tdee = calculateTDEE(bmr, activityLevel)
-    return calculateMacros(tdee, fitnessGoal, weightKgCalc)
-  }, [age, heightIn, weightLbs, gender, activityLevel, fitnessGoal])
+    return calculateMacros(tdee, fitnessGoal, weightKg)
+  }, [age, heightIn, weightKg, gender, activityLevel, fitnessGoal])
 
   /* ── Chart data (last 30 days, ascending by date) ──────────────────────── */
   const chartData = useMemo(() => {
@@ -221,7 +220,7 @@ export default function ProfilePage() {
     await updateProfile({
       age,
       height_in: heightIn,
-      weight_kg: Math.round((weightLbs / 2.205) * 10) / 10,
+      weight_kg: weightKg,
       gender,
       activity_level: activityLevel as 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active',
       fitness_goal: fitnessGoal,
@@ -230,7 +229,7 @@ export default function ProfilePage() {
       daily_protein: macros.protein,
       daily_carbs: macros.carbs,
       daily_fats: macros.fats,
-      goal_weight_kg: goalWeight || null,
+      goal_weight_lbs: goalWeight || null,
       daily_water_ml: dailyWaterMl,
     })
 
@@ -254,7 +253,7 @@ export default function ProfilePage() {
       daily_protein: 150,
       daily_carbs: 300,
       daily_fats: 70,
-      goal_weight_kg: null,
+      goal_weight_lbs: null,
       daily_water_ml: 2500,
     })
     setResetting(false)
@@ -340,7 +339,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="rounded-xl bg-transparent p-3 border border-white/[0.06]">
                     <p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Weight</p>
-                    <p className="mt-0.5 text-lg font-bold text-[#EAEAF0] tabular-nums">{Math.round(profile.weight_kg * 2.205)}<span className="text-xs font-normal text-[#6B6B8A] ml-0.5">lbs</span></p>
+                    <p className="mt-0.5 text-lg font-bold text-[#EAEAF0] tabular-nums">{profile.weight_kg}<span className="text-xs font-normal text-[#6B6B8A] ml-0.5">kg</span></p>
                   </div>
                   <div className="rounded-xl bg-transparent p-3 border border-white/[0.06]">
                     <p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Height</p>
@@ -385,7 +384,7 @@ export default function ProfilePage() {
               {/* Quick log form */}
               <div className="flex items-end gap-2">
                 <div className="flex-1">
-                  <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">Weight (lbs)</label>
+                  <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">Weight (kg)</label>
                   <input
                     type="number"
                     min={66}
@@ -490,7 +489,7 @@ export default function ProfilePage() {
                     <p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Current</p>
                     <p className="mt-0.5 text-lg font-bold text-[#EAEAF0] tabular-nums">
                       {weightStats.current}
-                      <span className="text-xs font-normal text-[#6B6B8A] ml-0.5">lbs</span>
+                      <span className="text-xs font-normal text-[#6B6B8A] ml-0.5">kg</span>
                     </p>
                   </div>
                   <div className="rounded-xl bg-transparent border border-white/[0.06] p-3 text-center">
@@ -499,14 +498,14 @@ export default function ProfilePage() {
                       weightStats.change < 0 ? 'text-[#34D399]' : weightStats.change > 0 ? 'text-[#F87171]' : 'text-[#EAEAF0]'
                     }`}>
                       {weightStats.change > 0 ? '+' : ''}{weightStats.change}
-                      <span className="text-xs font-normal text-[#6B6B8A] ml-0.5">lbs</span>
+                      <span className="text-xs font-normal text-[#6B6B8A] ml-0.5">kg</span>
                     </p>
                   </div>
                   <div className="rounded-xl bg-transparent border border-white/[0.06] p-3 text-center">
                     <p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Goal</p>
                     <p className="mt-0.5 text-lg font-bold text-[#A78BFA] tabular-nums">
                       {weightStats.goal ? (
-                        <>{weightStats.goal}<span className="text-xs font-normal text-[#6B6B8A] ml-0.5">lbs</span></>
+                        <>{weightStats.goal}<span className="text-xs font-normal text-[#6B6B8A] ml-0.5">kg</span></>
                       ) : (
                         <span className="text-sm text-[#6B6B8A]">--</span>
                       )}
@@ -620,13 +619,13 @@ export default function ProfilePage() {
                   <Weight className="h-5 w-5 text-[#6B6B8A]" />
                 </div>
                 <Input
-                  label="Weight (lbs)"
+                  label="Weight (kg)"
                   type="number"
                   min={66}
                   max={660}
                   step={1}
-                  value={weightLbs}
-                  onChange={(e) => setWeightLbs(Number(e.target.value))}
+                  value={weightKg}
+                  onChange={(e) => setWeightKg(Number(e.target.value))}
                   placeholder="165"
                 />
               </div>

@@ -18,7 +18,7 @@ export interface UserProfile {
   daily_carbs: number
   daily_fats: number
   workout_days_per_week: number
-  goal_weight_kg: number | null
+  goal_weight_lbs: number | null
   daily_water_ml: number
   created_at: string
   updated_at: string

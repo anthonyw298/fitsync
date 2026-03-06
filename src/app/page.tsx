@@ -228,7 +228,7 @@ export default function DashboardPage() {
     return diff > 0 ? 'up' : 'down'
   }, [weightLogs])
 
-  const goalWeight = profile?.goal_weight_kg ?? null
+  const goalWeight = profile?.goal_weight_lbs ?? null
 
   /* ── Loading / Onboarding gates ───────────────────────────────────────── */
 
