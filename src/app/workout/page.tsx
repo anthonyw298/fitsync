@@ -413,7 +413,11 @@ export default function WorkoutPage() {
       const data = await res.json()
       if (data.plan) {
         const st = data.plan.filter((d: WorkoutDay) => !d.rest_day).length <= 3 ? 'Full Body' : data.plan.filter((d: WorkoutDay) => !d.rest_day).length <= 4 ? 'Upper/Lower' : 'PPL'
-        db.savePlan({ week_number: activePlan ? activePlan.week_number + 1 : 1, plan_data: data.plan, split_type: st, days_per_week: data.plan.filter((d: WorkoutDay) => !d.rest_day).length, adjusted_for_sleep: !!data.sleep_analysis?.recommendation?.includes('reduce'), adjustment_notes: data.sleep_analysis?.recommendation ?? null })
+        await fetch('/api/data/workout/plans', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ week_number: activePlan ? activePlan.week_number + 1 : 1, plan_data: data.plan, split_type: st, days_per_week: data.plan.filter((d: WorkoutDay) => !d.rest_day).length, adjusted_for_sleep: !!data.sleep_analysis?.recommendation?.includes('reduce'), adjustment_notes: data.sleep_analysis?.recommendation ?? null, active: true }),
+        })
         await fetchActivePlan()
       }
     } catch (err) { console.error('Failed to generate plan:', err) } finally { setGenerating(false) }
@@ -424,8 +428,6 @@ export default function WorkoutPage() {
     const loggedExercises: LoggedExercise[] = sessionExercises.map((ex, i) => ({ name: ex.name, sets: exerciseSets[i]?.filter((s) => s.completed) ?? [] }))
     try {
       await addWorkoutLog({ date: getToday(), plan_id: sessionSource === 'plan' ? activePlan?.id ?? null : null, workout_name: sessionName, exercises: loggedExercises, duration_minutes: durationMinutes, calories_burned: estimatedCalories, notes: sessionSource === 'saved' ? `Saved template: ${sessionName}` : '', completed: allComplete })
-      db.addWorkoutLog({ date: getToday(), plan_id: sessionSource === 'plan' ? activePlan?.id ?? null : null, workout_name: sessionName, exercises: loggedExercises, duration_minutes: durationMinutes, calories_burned: estimatedCalories, notes: sessionSource === 'saved' ? `Saved template: ${sessionName}` : '', completed: allComplete })
-      db.updateStreak('workout', getToday()); db.updateStreak('overall', getToday())
       setShowSummary(false); setShowCompletion(true)
       setTimeout(() => { setShowCompletion(false); fetchTodayWorkout() }, 3000)
     } catch (err) { console.error('Failed to save workout:', err) } finally { setSaving(false) }
