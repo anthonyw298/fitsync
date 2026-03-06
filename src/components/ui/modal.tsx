@@ -107,7 +107,7 @@ const Modal: React.FC<ModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+          className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center"
           style={{ touchAction: "none" }}
         >
           {/* Backdrop – blocks all touch on background */}
