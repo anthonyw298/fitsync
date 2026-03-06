@@ -851,14 +851,14 @@ function FoodPageContent() {
                                   >
                                     <button
                                       onClick={() => handleEditEntry(entry)}
-                                      className="rounded-md p-1.5 text-[#6B6B8A] opacity-0 transition-all group-hover:opacity-100 hover:bg-[#A78BFA]/15 hover:text-[#A78BFA] sm:opacity-100"
+                                      className="rounded-md p-1.5 text-[#6B6B8A] transition-all hover:bg-[#A78BFA]/15 hover:text-[#A78BFA]"
                                       aria-label="Edit entry"
                                     >
                                       <Pencil className="h-4 w-4" />
                                     </button>
                                     <button
                                       onClick={() => setDeleteConfirm(entry.id)}
-                                      className="rounded-md p-1.5 text-[#6B6B8A] opacity-0 transition-all group-hover:opacity-100 hover:bg-red-500/15 hover:text-red-400 sm:opacity-100"
+                                      className="rounded-md p-1.5 text-[#6B6B8A] transition-all hover:bg-red-500/15 hover:text-red-400"
                                       aria-label="Delete entry"
                                     >
                                       <Trash2 className="h-4 w-4" />
