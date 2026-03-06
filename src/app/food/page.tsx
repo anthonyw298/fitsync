@@ -41,6 +41,7 @@ import { ProgressBar } from '@/components/ui/progress-bar'
 import { Badge } from '@/components/ui/badge'
 // Local storage - no Supabase needed
 import { getToday, getMacroColor } from '@/lib/utils'
+import UserMenu from '@/components/layout/user-menu'
 import type { FoodEntry, WaterEntry } from '@/lib/database.types'
 
 /* -------------------------------------------------------------------------- */
@@ -424,6 +425,7 @@ function FoodPageContent() {
             >
               <CalendarDays className="h-5 w-5" />
             </Link>
+            <UserMenu />
           </div>
         </div>
       </header>
@@ -990,6 +992,14 @@ function AddFoodModal({
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
   const [analysisError, setAnalysisError] = useState<string | null>(null)
 
+  // Optional photo context hints
+  const [hintBrand, setHintBrand] = useState('')
+  const [hintIngredients, setHintIngredients] = useState('')
+  const [hintAmount, setHintAmount] = useState('')
+  const [hintCalories, setHintCalories] = useState('')
+  const [hintProtein, setHintProtein] = useState('')
+  const [hintsExpanded, setHintsExpanded] = useState(false)
+
   // Form state (shared between photo-analysis-edit and manual)
   const [foodName, setFoodName] = useState('')
   const [calories, setCalories] = useState('')
@@ -1060,6 +1070,12 @@ function AddFoodModal({
         setSaving(false)
         setIsEditing(false)
         setRfLoaded(false)
+        setHintBrand('')
+        setHintIngredients('')
+        setHintAmount('')
+        setHintCalories('')
+        setHintProtein('')
+        setHintsExpanded(false)
       }, 300)
     }
   }, [isOpen])
@@ -1089,10 +1105,18 @@ function AddFoodModal({
     setAnalysisError(null)
 
     try {
+      // Build optional hints object
+      const hints: Record<string, string> = {}
+      if (hintBrand.trim()) hints.brand = hintBrand.trim()
+      if (hintIngredients.trim()) hints.ingredients = hintIngredients.trim()
+      if (hintAmount.trim()) hints.amount = hintAmount.trim()
+      if (hintCalories.trim()) hints.calories = hintCalories.trim()
+      if (hintProtein.trim()) hints.protein = hintProtein.trim()
+
       const res = await fetch('/api/analyze-food', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: imageBase64 }),
+        body: JSON.stringify({ image: imageBase64, ...(Object.keys(hints).length > 0 ? { hints } : {}) }),
       })
 
       const json = await res.json()
@@ -1366,17 +1390,87 @@ function AddFoodModal({
               </div>
             )}
 
-            {/* Analyze button (before analysis) */}
+            {/* Optional context hints (before analysis) */}
             {!analysisResult && !analyzing && (
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={analyzeImage}
-                disabled={!imageBase64}
-              >
-                <UtensilsCrossed className="h-4 w-4 mr-2" />
-                Analyze Food
-              </Button>
+              <div className="space-y-3">
+                <button
+                  onClick={() => setHintsExpanded(!hintsExpanded)}
+                  className="flex w-full items-center justify-between rounded-xl border border-white/[0.06] bg-[#0E0E18] px-3 py-2.5 text-sm text-[#6B6B8A] transition-colors hover:border-[#A78BFA]/30"
+                >
+                  <span className="flex items-center gap-2">
+                    <Edit3 className="h-3.5 w-3.5" />
+                    Add details for better accuracy
+                  </span>
+                  <motion.div
+                    animate={{ rotate: hintsExpanded ? 0 : -90 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </motion.div>
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {hintsExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: 'easeInOut' }}
+                      className="overflow-hidden space-y-3"
+                    >
+                      <Input
+                        label="Brand / Restaurant (optional)"
+                        placeholder="e.g. Chipotle, Trader Joe's, homemade"
+                        value={hintBrand}
+                        onChange={(e) => setHintBrand(e.target.value)}
+                      />
+                      <Input
+                        label="Ingredients (optional)"
+                        placeholder="e.g. chicken, rice, avocado, sour cream"
+                        value={hintIngredients}
+                        onChange={(e) => setHintIngredients(e.target.value)}
+                      />
+                      <Input
+                        label="Amount / Portion (optional)"
+                        placeholder="e.g. 300g, 1 large bowl, half plate"
+                        value={hintAmount}
+                        onChange={(e) => setHintAmount(e.target.value)}
+                      />
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input
+                          label="Known Calories (optional)"
+                          type="number"
+                          inputMode="numeric"
+                          placeholder="e.g. 450"
+                          value={hintCalories}
+                          onChange={(e) => setHintCalories(e.target.value)}
+                        />
+                        <Input
+                          label="Known Protein (optional)"
+                          type="number"
+                          inputMode="decimal"
+                          placeholder="e.g. 35g"
+                          value={hintProtein}
+                          onChange={(e) => setHintProtein(e.target.value)}
+                        />
+                      </div>
+                      <p className="text-[10px] text-[#6B6B8A] leading-relaxed">
+                        All fields are optional. Fill in anything you know and the AI will use it for a more accurate estimate.
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={analyzeImage}
+                  disabled={!imageBase64}
+                >
+                  <UtensilsCrossed className="h-4 w-4 mr-2" />
+                  Analyze Food
+                </Button>
+              </div>
             )}
 
             {/* Loading state */}

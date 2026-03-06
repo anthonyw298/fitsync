@@ -228,7 +228,7 @@ export default function DashboardPage() {
     return diff > 0 ? 'up' : 'down'
   }, [weightLogs])
 
-  const goalWeight = profile?.goal_weight_lbs ?? null
+  const goalWeight = profile?.goal_weight_kg ?? null
 
   /* ── Loading / Onboarding gates ───────────────────────────────────────── */
 
@@ -750,7 +750,7 @@ export default function DashboardPage() {
                       <div>
                         <div className="flex items-center gap-1.5">
                           <p className="text-sm font-medium text-[#EAEAF0]">
-                            {latestWeight.toFixed(1)} kg
+                            {latestWeight.toFixed(1)} lbs
                           </p>
                           {weightTrend === 'up' && (
                             <TrendUpIcon className="h-4 w-4 text-[#F87171]" />
@@ -771,9 +771,9 @@ export default function DashboardPage() {
                     {goalWeight !== null && (
                       <div className="text-right">
                         <p className="text-xs text-[#6B6B8A]">Goal</p>
-                        <p className="text-sm font-semibold tabular-nums text-[#EAEAF0]">
-                          {goalWeight} kg
-                        </p>
+                         <p className="text-sm font-semibold tabular-nums text-[#EAEAF0]">
+                          {goalWeight} lbs
+                         </p>
                       </div>
                     )}
                   </div>
@@ -782,7 +782,7 @@ export default function DashboardPage() {
                     <div className="rounded-xl bg-white/[0.03] border border-white/[0.04] px-3 py-2.5">
                       <div className="flex items-center justify-between text-xs text-[#6B6B8A]">
                         <span>
-                          {Math.abs(latestWeight - goalWeight).toFixed(1)} kg{' '}
+                          {Math.abs(latestWeight - goalWeight).toFixed(1)} lbs{' '}
                           {latestWeight > goalWeight ? 'to lose' : latestWeight < goalWeight ? 'to gain' : '- at goal!'}
                         </span>
                       </div>

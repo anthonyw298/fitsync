@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Modal } from '@/components/ui/modal'
 import { Badge } from '@/components/ui/badge'
+import UserMenu from '@/components/layout/user-menu'
 import { ProgressBar } from '@/components/ui/progress-bar'
 import { EmptyState } from '@/components/ui/empty-state'
 import { getToday } from '@/lib/utils'
@@ -195,10 +196,13 @@ export default function SupplementsPage() {
               Supplements
             </h1>
           </div>
-          <Button size="sm" onClick={() => setAddOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Add
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={() => setAddOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Add
+            </Button>
+            <UserMenu />
+          </div>
         </div>
       </header>
 

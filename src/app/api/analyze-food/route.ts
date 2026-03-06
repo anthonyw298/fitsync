@@ -28,8 +28,34 @@ const FALLBACK_NUTRITION: NutritionData = {
   confidence: 0,
 };
 
-const SYSTEM_PROMPT =
+const BASE_SYSTEM_PROMPT =
   "You are a nutrition expert. Analyze the food in this image. Return a JSON object with: food_name (string), calories (number), protein_g (number), carbs_g (number), fats_g (number), fiber_g (number), serving_size (string), confidence (number 0-1). Only return valid JSON, no other text.";
+
+interface FoodHints {
+  brand?: string;
+  ingredients?: string;
+  amount?: string;
+  calories?: string;
+  protein?: string;
+}
+
+function buildUserPrompt(hints?: FoodHints): string {
+  const parts: string[] = ["Analyze this food image and provide the nutritional information as JSON."];
+
+  if (hints && Object.keys(hints).length > 0) {
+    parts.push("");
+    parts.push("The user provided these additional details to help with accuracy:");
+    if (hints.brand) parts.push(`- Brand/Restaurant: ${hints.brand}`);
+    if (hints.ingredients) parts.push(`- Known ingredients: ${hints.ingredients}`);
+    if (hints.amount) parts.push(`- Portion size: ${hints.amount}`);
+    if (hints.calories) parts.push(`- Known calories: ${hints.calories} kcal (use this exact value)`);
+    if (hints.protein) parts.push(`- Known protein: ${hints.protein}g (use this exact value)`);
+    parts.push("");
+    parts.push("Use the user-provided values where given. For any values not provided, estimate them based on the image and the context above.");
+  }
+
+  return parts.join("\n");
+}
 
 function parseNutritionResponse(text: string): NutritionData {
   // Try direct parse first
@@ -98,7 +124,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { image } = body;
+    const { image, hints } = body as { image?: string; hints?: FoodHints };
 
     if (!image || typeof image !== "string") {
       return NextResponse.json(
@@ -126,12 +152,14 @@ export async function POST(request: NextRequest) {
       mimeType = inferMimeType(base64Data);
     }
 
+    const userPrompt = buildUserPrompt(hints);
+
     // Try the 90b model first, fall back to 11b
     let result;
     try {
       result = await generateText({
         model: groq("llama-3.2-90b-vision-preview"),
-        system: SYSTEM_PROMPT,
+        system: BASE_SYSTEM_PROMPT,
         messages: [
           {
             role: "user",
@@ -142,7 +170,7 @@ export async function POST(request: NextRequest) {
               },
               {
                 type: "text",
-                text: "Analyze this food image and provide the nutritional information as JSON.",
+                text: userPrompt,
               },
             ],
           },
@@ -158,7 +186,7 @@ export async function POST(request: NextRequest) {
 
       result = await generateText({
         model: groq("llama-3.2-11b-vision-preview"),
-        system: SYSTEM_PROMPT,
+        system: BASE_SYSTEM_PROMPT,
         messages: [
           {
             role: "user",
@@ -169,7 +197,7 @@ export async function POST(request: NextRequest) {
               },
               {
                 type: "text",
-                text: "Analyze this food image and provide the nutritional information as JSON.",
+                text: userPrompt,
               },
             ],
           },

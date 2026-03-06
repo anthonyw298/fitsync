@@ -19,24 +19,26 @@ import {
   Scale as ScaleIcon,
   Calendar,
 } from 'lucide-react'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-} from 'recharts'
 import { useAppStore } from '@/store/app-store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
+import dynamic from 'next/dynamic'
 import { MacroRing } from '@/components/ui/macro-ring'
 import { Modal } from '@/components/ui/modal'
 import { Badge } from '@/components/ui/badge'
+import UserMenu from '@/components/layout/user-menu'
 import type { WeightLog } from '@/lib/database.types'
+
+const WeightChart = dynamic(() => import('@/components/charts/weight-chart'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-[180px]">
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#A78BFA]/30 border-t-[#A78BFA]" />
+    </div>
+  ),
+})
 import {
   calculateBMR,
   calculateTDEE,
@@ -101,20 +103,6 @@ const ACTIVITY_LABELS: Record<string, string> = {
 const WATER_PRESETS = [2000, 2500, 3000]
 
 /* -------------------------------------------------------------------------- */
-/*  Custom Tooltip for Recharts                                               */
-/* -------------------------------------------------------------------------- */
-
-function WeightTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="rounded-lg border border-white/[0.06] glass-dense px-3 py-2 shadow-xl">
-      <p className="text-xs text-[#6B6B8A]">{label}</p>
-      <p className="text-sm font-bold text-[#EAEAF0]">{payload[0].value} kg</p>
-    </div>
-  )
-}
-
-/* -------------------------------------------------------------------------- */
 /*  Profile Page                                                              */
 /* -------------------------------------------------------------------------- */
 
@@ -170,17 +158,18 @@ export default function ProfilePage() {
       setActivityLevel(profile.activity_level)
       setFitnessGoal(profile.fitness_goal)
       setWorkoutDays(profile.workout_days_per_week)
-      setGoalWeight(profile.goal_weight_lbs ?? '')
+      setGoalWeight(profile.goal_weight_kg ?? '')
       setDailyWaterMl(profile.daily_water_ml ?? 2500)
     }
   }, [profile])
 
-  /* ── Live macro calculation ────────────────────────────────────────────── */
+  /* ── Live macro calculation (convert lbs→kg for BMR formula) ───────────── */
   const macros = useMemo(() => {
     if (!age || !heightIn || !weightKg) return null
-    const bmr = calculateBMR(weightKg, heightIn, age, gender)
+    const weightKgActual = weightKg / 2.205
+    const bmr = calculateBMR(weightKgActual, heightIn, age, gender)
     const tdee = calculateTDEE(bmr, activityLevel)
-    return calculateMacros(tdee, fitnessGoal, weightKg)
+    return calculateMacros(tdee, fitnessGoal, weightKgActual)
   }, [age, heightIn, weightKg, gender, activityLevel, fitnessGoal])
 
   /* ── Chart data (last 30 days, ascending by date) ──────────────────────── */
@@ -229,7 +218,7 @@ export default function ProfilePage() {
       daily_protein: macros.protein,
       daily_carbs: macros.carbs,
       daily_fats: macros.fats,
-      goal_weight_lbs: goalWeight || null,
+      goal_weight_kg: goalWeight || null,
       daily_water_ml: dailyWaterMl,
     })
 
@@ -253,7 +242,7 @@ export default function ProfilePage() {
       daily_protein: 150,
       daily_carbs: 300,
       daily_fats: 70,
-      goal_weight_lbs: null,
+      goal_weight_kg: null,
       daily_water_ml: 2500,
     })
     setResetting(false)
@@ -300,11 +289,14 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-transparent">
       {/* Header */}
       <header className="border-b border-white/[0.06] glass-dense px-4 pt-[env(safe-area-inset-top,0px)]">
-        <div className="mx-auto flex h-14 max-w-lg items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#A78BFA]/15">
-            <User className="h-5 w-5 text-[#A78BFA]" />
+        <div className="mx-auto flex h-14 max-w-lg items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#A78BFA]/15">
+              <User className="h-5 w-5 text-[#A78BFA]" />
+            </div>
+            <h1 className="text-base font-semibold text-[#EAEAF0]">Profile</h1>
           </div>
-          <h1 className="text-base font-semibold text-[#EAEAF0]">Profile</h1>
+          <UserMenu />
         </div>
       </header>
 
@@ -339,7 +331,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="rounded-xl bg-transparent p-3 border border-white/[0.06]">
                     <p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Weight</p>
-                    <p className="mt-0.5 text-lg font-bold text-[#EAEAF0] tabular-nums">{profile.weight_kg}<span className="text-xs font-normal text-[#6B6B8A] ml-0.5">kg</span></p>
+                    <p className="mt-0.5 text-lg font-bold text-[#EAEAF0] tabular-nums">{profile.weight_kg}<span className="text-xs font-normal text-[#6B6B8A] ml-0.5">lbs</span></p>
                   </div>
                   <div className="rounded-xl bg-transparent p-3 border border-white/[0.06]">
                     <p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Height</p>
@@ -384,11 +376,11 @@ export default function ProfilePage() {
               {/* Quick log form */}
               <div className="flex items-end gap-2">
                 <div className="flex-1">
-                  <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">Weight (kg)</label>
+                  <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">Weight (lbs)</label>
                   <input
                     type="number"
-                    min={66}
-                    max={660}
+                    min={60}
+                    max={700}
                     step={0.1}
                     value={newWeight}
                     onChange={(e) => setNewWeight(e.target.value ? Number(e.target.value) : '')}
@@ -428,51 +420,11 @@ export default function ProfilePage() {
                 </Button>
               </div>
 
-              {/* 30-day trend chart */}
+              {/* 30-day trend chart (lazy loaded) */}
               {chartData.length >= 2 && (
                 <div className="rounded-xl border border-white/[0.06] bg-transparent p-3">
                   <p className="text-xs font-medium text-[#6B6B8A] mb-2">30-Day Trend</p>
-                  <ResponsiveContainer width="100%" height={180}>
-                    <LineChart data={chartData} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
-                      <XAxis
-                        dataKey="date"
-                        tick={{ fontSize: 10, fill: '#6B6B8A' }}
-                        axisLine={{ stroke: 'rgba(255,255,255,0.06)' }}
-                        tickLine={false}
-                        interval="preserveStartEnd"
-                      />
-                      <YAxis
-                        domain={['dataMin - 2', 'dataMax + 2']}
-                        tick={{ fontSize: 10, fill: '#6B6B8A' }}
-                        axisLine={false}
-                        tickLine={false}
-                        width={40}
-                      />
-                      <Tooltip content={<WeightTooltip />} />
-                      {goalWeight && (
-                        <ReferenceLine
-                          y={Number(goalWeight)}
-                          stroke="#A78BFA"
-                          strokeDasharray="6 4"
-                          strokeOpacity={0.5}
-                          label={{
-                            value: 'Goal',
-                            position: 'right',
-                            fill: '#A78BFA',
-                            fontSize: 10,
-                          }}
-                        />
-                      )}
-                      <Line
-                        type="monotone"
-                        dataKey="weight"
-                        stroke="#A78BFA"
-                        strokeWidth={2}
-                        dot={{ fill: '#A78BFA', r: 3, strokeWidth: 0 }}
-                        activeDot={{ r: 5, fill: '#A78BFA', strokeWidth: 2, stroke: '#0E0E18' }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  <WeightChart data={chartData} goalWeight={goalWeight} />
                 </div>
               )}
 
@@ -489,7 +441,7 @@ export default function ProfilePage() {
                     <p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Current</p>
                     <p className="mt-0.5 text-lg font-bold text-[#EAEAF0] tabular-nums">
                       {weightStats.current}
-                      <span className="text-xs font-normal text-[#6B6B8A] ml-0.5">kg</span>
+                      <span className="text-xs font-normal text-[#6B6B8A] ml-0.5">lbs</span>
                     </p>
                   </div>
                   <div className="rounded-xl bg-transparent border border-white/[0.06] p-3 text-center">
@@ -498,14 +450,14 @@ export default function ProfilePage() {
                       weightStats.change < 0 ? 'text-[#34D399]' : weightStats.change > 0 ? 'text-[#F87171]' : 'text-[#EAEAF0]'
                     }`}>
                       {weightStats.change > 0 ? '+' : ''}{weightStats.change}
-                      <span className="text-xs font-normal text-[#6B6B8A] ml-0.5">kg</span>
+                      <span className="text-xs font-normal text-[#6B6B8A] ml-0.5">lbs</span>
                     </p>
                   </div>
                   <div className="rounded-xl bg-transparent border border-white/[0.06] p-3 text-center">
                     <p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Goal</p>
                     <p className="mt-0.5 text-lg font-bold text-[#A78BFA] tabular-nums">
                       {weightStats.goal ? (
-                        <>{weightStats.goal}<span className="text-xs font-normal text-[#6B6B8A] ml-0.5">kg</span></>
+                        <>{weightStats.goal}<span className="text-xs font-normal text-[#6B6B8A] ml-0.5">lbs</span></>
                       ) : (
                         <span className="text-sm text-[#6B6B8A]">--</span>
                       )}
@@ -534,7 +486,7 @@ export default function ProfilePage() {
                             })}
                           </span>
                           <span className="text-sm font-semibold text-[#EAEAF0] tabular-nums">
-                            {log.weight_kg} kg
+                            {log.weight_kg} lbs
                           </span>
                           {log.notes && (
                             <span className="text-xs text-[#6B6B8A] italic truncate max-w-[80px]">
@@ -619,10 +571,10 @@ export default function ProfilePage() {
                   <Weight className="h-5 w-5 text-[#6B6B8A]" />
                 </div>
                 <Input
-                  label="Weight (kg)"
+                  label="Weight (lbs)"
                   type="number"
-                  min={66}
-                  max={660}
+                  min={60}
+                  max={700}
                   step={1}
                   value={weightKg}
                   onChange={(e) => setWeightKg(Number(e.target.value))}
@@ -743,10 +695,10 @@ export default function ProfilePage() {
                 </div>
                 <div className="w-full">
                   <Input
-                    label="Goal Weight (kg)"
+                    label="Goal Weight (lbs)"
                     type="number"
-                    min={50}
-                    max={600}
+                    min={60}
+                    max={700}
                     step={0.1}
                     value={goalWeight}
                     onChange={(e) => setGoalWeight(e.target.value ? Number(e.target.value) : '')}

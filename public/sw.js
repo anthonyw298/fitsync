@@ -1,5 +1,8 @@
-const CACHE_NAME = 'fitsync-v3';
-const urlsToCache = [
+const CACHE_NAME = 'fitsync-v4';
+const STATIC_CACHE = 'fitsync-static-v4';
+
+// Pages to pre-cache for offline shell
+const SHELL_URLS = [
   '/',
   '/food',
   '/workout',
@@ -10,9 +13,21 @@ const urlsToCache = [
   '/manifest.json',
 ];
 
+// Static assets to cache aggressively
+const STATIC_PATTERNS = [
+  /\/_next\/static\//,
+  /\/icons\//,
+  /\.woff2?$/,
+  /\.ttf$/,
+];
+
+function isStaticAsset(url) {
+  return STATIC_PATTERNS.some((pattern) => pattern.test(url));
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_URLS))
   );
   self.skipWaiting();
 });
@@ -22,7 +37,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) =>
       Promise.all(
         cacheNames
-          .filter((name) => name !== CACHE_NAME)
+          .filter((name) => name !== CACHE_NAME && name !== STATIC_CACHE)
           .map((name) => caches.delete(name))
       )
     )
@@ -31,49 +46,78 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Skip non-GET requests
+  if (request.method !== 'GET') return;
+
+  // Skip chrome-extension and other non-http(s) requests
+  if (!url.protocol.startsWith('http')) return;
+
   // Network-first strategy for API calls
-  if (event.request.url.includes('/api/')) {
+  if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(event.request).catch(() =>
-        new Response(JSON.stringify({ error: 'Offline' }), {
-          headers: { 'Content-Type': 'application/json' },
-        })
-      )
+      fetch(request)
+        .then((response) => response)
+        .catch(() =>
+          new Response(JSON.stringify({ error: 'Offline' }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' },
+          })
+        )
     );
     return;
   }
 
-  // Network-first strategy for pages (HTML navigation requests)
-  if (event.request.mode === 'navigate') {
+  // Cache-first for static assets (JS, CSS, fonts, images)
+  if (isStaticAsset(url.pathname) || request.destination === 'font' || request.destination === 'image') {
     event.respondWith(
-      fetch(event.request)
-        .then((fetchResponse) => {
-          if (fetchResponse.ok) {
-            const responseClone = fetchResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
           }
-          return fetchResponse;
-        })
-        .catch(() => caches.match(event.request))
+          return response;
+        });
+      })
     );
     return;
   }
 
-  // Cache-first strategy for static assets (JS, CSS, images)
+  // Network-first for HTML navigation requests (pages)
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.match(request).then((cached) => cached || caches.match('/'))
+        )
+    );
+    return;
+  }
+
+  // Stale-while-revalidate for everything else
   event.respondWith(
-    caches.match(event.request).then((response) =>
-      response ||
-      fetch(event.request).then((fetchResponse) => {
-        if (fetchResponse.ok && event.request.method === 'GET') {
-          const responseClone = fetchResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-        }
-        return fetchResponse;
-      })
-    )
+    caches.match(request).then((cached) => {
+      const fetchPromise = fetch(request)
+        .then((response) => {
+          if (response.ok && request.method === 'GET') {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => cached);
+      return cached || fetchPromise;
+    })
   );
 });

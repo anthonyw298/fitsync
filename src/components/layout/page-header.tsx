@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import UserMenu from "./user-menu";
 
 interface PageHeaderProps {
   title: string;
@@ -32,11 +33,10 @@ export default function PageHeader({
             </p>
           )}
         </div>
-        {rightAction && (
-          <div className="ml-3 flex flex-shrink-0 items-center">
-            {rightAction}
-          </div>
-        )}
+        <div className="ml-3 flex flex-shrink-0 items-center gap-2">
+          {rightAction}
+          <UserMenu />
+        </div>
       </div>
     </header>
   );

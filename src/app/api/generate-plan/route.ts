@@ -64,6 +64,12 @@ interface NutritionSummary {
   daysTracked: number;
 }
 
+interface SupplementInfo {
+  name: string;
+  dosage?: string;
+  timing?: string;
+}
+
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 function analyzeSleepQuality(sleepData: SleepLog[]): {
@@ -139,7 +145,8 @@ function buildPrompt(
   sleepData: SleepLog[],
   currentPlan: WorkoutPlan | null,
   recentWorkouts?: RecentWorkout[],
-  nutritionSummary?: NutritionSummary | null
+  nutritionSummary?: NutritionSummary | null,
+  supplements?: SupplementInfo[]
 ): string {
   const sleep = analyzeSleepQuality(sleepData);
   const planSummary = summarizeCurrentPlan(currentPlan);
@@ -179,6 +186,29 @@ function buildPrompt(
     lines.push(`Protein per kg body weight: ${proteinPerKg}g/kg`);
     if (profile.weight_kg && nutritionSummary.avgDailyProtein / profile.weight_kg < 1.6) {
       lines.push(`Note: Protein intake is below 1.6g/kg — consider moderate volume to avoid excessive muscle damage while recovery nutrition is suboptimal.`);
+    }
+  }
+
+  // Supplements context
+  if (supplements && supplements.length > 0) {
+    lines.push("");
+    lines.push(`## Current Supplements`);
+    for (const s of supplements) {
+      let line = `- ${s.name}`;
+      if (s.dosage) line += ` (${s.dosage})`;
+      if (s.timing) line += ` — ${s.timing}`;
+      lines.push(line);
+    }
+    // Add supplement-aware training notes
+    const suppNames = supplements.map((s) => s.name.toLowerCase());
+    if (suppNames.some((n) => n.includes("creatine"))) {
+      lines.push(`Note: User takes creatine — can support higher training volume and intensity. Consider slightly higher volume if recovery allows.`);
+    }
+    if (suppNames.some((n) => n.includes("caffeine") || n.includes("pre-workout") || n.includes("preworkout"))) {
+      lines.push(`Note: User takes a stimulant/pre-workout — can support higher intensity sessions. Place hardest compounds early in the workout.`);
+    }
+    if (suppNames.some((n) => n.includes("protein") || n.includes("whey") || n.includes("casein"))) {
+      lines.push(`Note: User supplements protein — factor this into recovery capacity.`);
     }
   }
 
@@ -432,12 +462,14 @@ export async function POST(request: NextRequest) {
       currentPlan,
       recentWorkouts,
       nutritionSummary,
+      supplements,
     } = body as {
       profile?: UserProfile;
       sleepData?: SleepLog[];
       currentPlan?: WorkoutPlan | null;
       recentWorkouts?: RecentWorkout[];
       nutritionSummary?: NutritionSummary | null;
+      supplements?: SupplementInfo[];
     };
 
     if (!profile) {
@@ -447,7 +479,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userPrompt = buildPrompt(profile, sleepData ?? [], currentPlan ?? null, recentWorkouts, nutritionSummary);
+    const userPrompt = buildPrompt(profile, sleepData ?? [], currentPlan ?? null, recentWorkouts, nutritionSummary, supplements);
 
     const result = await generateText({
       model: groq("llama-3.3-70b-versatile"),

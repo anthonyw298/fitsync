@@ -16,6 +16,7 @@ import { useAppStore } from '@/store/app-store'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { db } from '@/lib/local-db'
+import UserMenu from '@/components/layout/user-menu'
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -252,6 +253,7 @@ export default function ChatPage() {
               </div>
             )}
           </div>
+          <UserMenu />
         </div>
       </header>
 

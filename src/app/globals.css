@@ -315,3 +315,34 @@ input[type="number"] {
   border: 2px solid currentColor;
   animation: pulse-ring 2s ease-out infinite;
 }
+
+/* ── PWA Standalone Mode Fixes ──────────────────────────── */
+@media (display-mode: standalone) {
+  /* Prevent text selection on UI elements (but allow on inputs/textareas) */
+  button, a, nav, header, label {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Prevent callout on long press for links/images */
+  a, img {
+    -webkit-touch-callout: none;
+  }
+}
+
+/* ── Touch Target Helpers ──────────────────────────────── */
+/* Use .touch-target on interactive elements that need minimum tap area */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ── Prevent Horizontal Overflow ───────────────────────── */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+main {
+  overflow-x: hidden;
+}

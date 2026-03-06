@@ -407,11 +407,15 @@ export default function WorkoutPage() {
     try {
       const sleepPayload = recentSleep.slice(0, 7).map((s) => ({ date: s.date, hours: s.duration_hours, quality: s.quality }))
 
-      // Fetch recent workout logs and food data for full context
-      const [logsRes, foodRes] = await Promise.all([
+      // Fetch recent workout logs, food data, and supplements for full context
+      const [logsRes, foodRes, suppRes] = await Promise.all([
         fetch('/api/data/workout/logs?limit=14').then((r) => r.json()).catch(() => ({ data: [] })),
-        fetch('/api/data/food?range=7').then((r) => r.json()).catch(() => ({ data: [] })),
+        fetch(`/api/data/food?start=${new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]}&end=${new Date().toISOString().split('T')[0]}`).then((r) => r.json()).catch(() => ({ data: [] })),
+        fetch('/api/data/supplements').then((r) => r.json()).catch(() => ({ data: [] })),
       ])
+      const supplementsList = ((suppRes.data ?? []) as Array<Record<string, unknown>>)
+        .filter((s) => s.active !== false)
+        .map((s) => ({ name: s.name as string, dosage: `${s.dosage} ${s.unit}`, timing: s.time_of_day as string }))
       const recentWorkoutLogs = (logsRes.data ?? []).map((l: Record<string, unknown>) => ({
         date: l.date, workout_name: l.workout_name, exercises: l.exercises, duration_minutes: l.duration_minutes, completed: l.completed,
       }))
@@ -438,6 +442,7 @@ export default function WorkoutPage() {
           currentPlan: activePlan ? { days: activePlan.plan_data, name: activePlan.split_type } : null,
           recentWorkouts: recentWorkoutLogs.slice(0, 10),
           nutritionSummary,
+          supplements: supplementsList,
         }),
       })
       const data = await res.json()

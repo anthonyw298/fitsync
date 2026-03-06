@@ -219,6 +219,6 @@ CREATE TABLE IF NOT EXISTS daily_notes (
 -- Add number_of_servings to food_entries
 ALTER TABLE food_entries ADD COLUMN IF NOT EXISTS number_of_servings NUMERIC NOT NULL DEFAULT 1;
 
--- Add goal_weight_lbs and daily_water_ml to user_profiles
-ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS goal_weight_lbs NUMERIC;
+-- Add goal_weight_kg and daily_water_ml to user_profiles
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS goal_weight_kg NUMERIC;
 ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS daily_water_ml INTEGER NOT NULL DEFAULT 2500;
