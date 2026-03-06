@@ -25,7 +25,6 @@ import {
   Zap,
   Droplets,
   Scale,
-  Copy,
   History,
   Clock,
   Pencil,
@@ -212,8 +211,7 @@ function FoodPageContent() {
   const [notesSaving, setNotesSaving] = useState(false)
   const [notesLoaded, setNotesLoaded] = useState(false)
 
-  // Copy meal loading state
-  const [copyingMeal, setCopyingMeal] = useState<MealType | null>(null)
+
 
   // Load profile on mount
   useEffect(() => {
@@ -368,38 +366,6 @@ function FoodPageContent() {
       setWaterEntries((prev) => prev.filter((w) => w.id !== id))
     } catch {
       // silently fail
-    }
-  }
-
-  // Copy meal from yesterday
-  const handleCopyMealFromYesterday = async (mealType: MealType) => {
-    setCopyingMeal(mealType)
-    try {
-      const yesterday = addDays(selectedDate, -1)
-      const yesterdayEntries = await fetchFoodByDate(yesterday)
-      const mealEntries = yesterdayEntries.filter((e) => e.meal_type === mealType)
-
-      for (const entry of mealEntries) {
-        await addFoodEntry({
-          date: selectedDate,
-          meal_type: mealType,
-          food_name: entry.food_name,
-          photo_url: null,
-          calories: entry.calories,
-          protein_g: entry.protein_g,
-          carbs_g: entry.carbs_g,
-          fats_g: entry.fats_g,
-          fiber_g: entry.fiber_g,
-          serving_size: entry.serving_size,
-          number_of_servings: entry.number_of_servings,
-          ai_confidence: 0,
-        })
-      }
-      await loadFood()
-    } catch {
-      // silently fail
-    } finally {
-      setCopyingMeal(null)
     }
   }
 
@@ -754,24 +720,7 @@ function FoodPageContent() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1">
-                      {/* Copy from yesterday button */}
-                      <div
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleCopyMealFromYesterday(mealType)
-                        }}
-                        className="rounded-md p-1.5 text-[#6B6B8A] transition-colors hover:bg-white/[0.06] hover:text-[#EAEAF0]"
-                        role="button"
-                        aria-label={`Copy ${config.label} from yesterday`}
-                      >
-                        {copyingMeal === mealType ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                      </div>
-
+                     <div className="flex items-center gap-1">
                       <motion.div
                         animate={{ rotate: isCollapsed ? -90 : 0 }}
                         transition={{ duration: 0.2 }}

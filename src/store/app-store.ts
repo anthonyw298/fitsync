@@ -251,18 +251,19 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ activePlan: data, workoutLoading: false })
   },
   fetchTodayWorkout: async () => {
-    const data = await api<WorkoutLog>(`/api/data/workout/logs?date=${getToday()}`)
+    const raw = await api<WorkoutLog>(`/api/data/workout/logs?date=${getToday()}`)
+    const data = raw ? { ...raw, date: normalizeDate(raw.date) } : null
     set({ todayWorkout: data })
   },
   addWorkoutLog: async (log) => {
-    const data = await apiPost<WorkoutLog>('/api/data/workout/logs', log)
-    if (data) set({ todayWorkout: data })
+    const raw = await apiPost<WorkoutLog>('/api/data/workout/logs', log)
+    if (raw) set({ todayWorkout: { ...raw, date: normalizeDate(raw.date) } })
     await apiPost('/api/data/streaks', { streakType: 'workout', date: getToday() })
     await apiPost('/api/data/streaks', { streakType: 'overall', date: getToday() })
   },
   updateWorkoutLog: async (id, updates) => {
-    const data = await apiPut<WorkoutLog>(`/api/data/workout/logs?id=${id}`, updates)
-    if (data) set({ todayWorkout: data })
+    const raw = await apiPut<WorkoutLog>(`/api/data/workout/logs?id=${id}`, updates)
+    if (raw) set({ todayWorkout: { ...raw, date: normalizeDate(raw.date) } })
   },
   deleteWorkoutLog: async (id) => {
     await fetch(`/api/data/workout/logs?id=${id}`, { method: 'DELETE' })
