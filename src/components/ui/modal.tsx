@@ -49,7 +49,7 @@ const Modal: React.FC<ModalProps> = ({
     return () => window.removeEventListener("keydown", handler);
   }, [isOpen, onClose]);
 
-  // Lock body scroll while open – iOS-safe approach
+  // Lock body scroll + hide bottom nav while open
   React.useEffect(() => {
     if (!isOpen) return;
 
@@ -70,6 +70,9 @@ const Modal: React.FC<ModalProps> = ({
     document.body.style.overflow = "hidden";
     document.body.style.width = "100%";
 
+    // Hide the bottom nav bar
+    document.body.setAttribute("data-modal-open", "true");
+
     return () => {
       document.body.style.position = orig.position;
       document.body.style.top = orig.top;
@@ -78,6 +81,7 @@ const Modal: React.FC<ModalProps> = ({
       document.body.style.overflow = orig.overflow;
       document.body.style.width = orig.width;
       window.scrollTo(0, scrollY);
+      document.body.removeAttribute("data-modal-open");
     };
   }, [isOpen]);
 

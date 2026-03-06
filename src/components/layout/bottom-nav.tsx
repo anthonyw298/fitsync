@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
@@ -30,9 +31,20 @@ const navItems: NavItem[] = [
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const [hidden, setHidden] = useState(false);
+
+  // Watch for modal open/close via body attribute
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setHidden(document.body.hasAttribute("data-modal-open"));
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ["data-modal-open"] });
+    return () => observer.disconnect();
+  }, []);
 
   // Hide nav on login/signup page
   if (pathname === "/login") return null;
+  if (hidden) return null;
 
   return (
     <nav
