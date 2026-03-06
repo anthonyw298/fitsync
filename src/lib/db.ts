@@ -50,7 +50,7 @@ export async function upsertProfile(
         daily_carbs = ${profile.daily_carbs},
         daily_fats = ${profile.daily_fats},
         workout_days_per_week = ${profile.workout_days_per_week},
-        goal_weight_lbs = ${profile.goal_weight_lbs ?? null},
+        goal_weight_kg = ${profile.goal_weight_kg ?? null},
         daily_water_ml = ${profile.daily_water_ml ?? 2500},
         updated_at = NOW()
       WHERE user_id = ${userId}
@@ -60,8 +60,8 @@ export async function upsertProfile(
   }
 
   const rows = await sql`
-    INSERT INTO user_profiles (user_id, age, height_in, weight_kg, gender, activity_level, fitness_goal, daily_calories, daily_protein, daily_carbs, daily_fats, workout_days_per_week, goal_weight_lbs, daily_water_ml)
-    Values (${userId}, ${profile.age}, ${profile.height_in}, ${profile.weight_kg}, ${profile.gender}, ${profile.activity_level}, ${profile.fitness_goal}, ${profile.daily_calories}, ${profile.daily_protein}, ${profile.daily_carbs}, ${profile.daily_fats}, ${profile.workout_days_per_week}, ${profile.goal_weight_lbs ?? null}, ${profile.daily_water_ml ?? 2500})
+    INSERT INTO user_profiles (user_id, age, height_in, weight_kg, gender, activity_level, fitness_goal, daily_calories, daily_protein, daily_carbs, daily_fats, workout_days_per_week, goal_weight_kg, daily_water_ml)
+    Values (${userId}, ${profile.age}, ${profile.height_in}, ${profile.weight_kg}, ${profile.gender}, ${profile.activity_level}, ${profile.fitness_goal}, ${profile.daily_calories}, ${profile.daily_protein}, ${profile.daily_carbs}, ${profile.daily_fats}, ${profile.workout_days_per_week}, ${profile.goal_weight_kg ?? null}, ${profile.daily_water_ml ?? 2500})
     RETURNING *
   `;
   return rows[0] as UserProfile;
@@ -201,15 +201,15 @@ export async function getWeightLogs(userId: string, limit: number = 90): Promise
 export async function upsertWeightLog(
   userId: string,
   date: string,
-  weightLbs: number,
+  weightKg: number,
   notes: string = ""
 ): Promise<WeightLog> {
   const sql = getClient();
   const rows = await sql`
-    INSERT INTO weight_logs (user_id, date, weight_lbs, notes)
-    VALUES (${userId}, ${date}, ${weightLbs}, ${notes})
+    INSERT INTO weight_logs (user_id, date, weight_kg, notes)
+    VALUES (${userId}, ${date}, ${weightKg}, ${notes})
     ON CONFLICT (user_id, date) DO UPDATE SET
-      weight_lbs = EXCLUDED.weight_lbs,
+      weight_kg = EXCLUDED.weight_kg,
       notes = EXCLUDED.notes
     RETURNING *
   `;

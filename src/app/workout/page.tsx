@@ -177,7 +177,7 @@ function ExerciseRow({ exercise, exerciseIndex, sets, onSetUpdate, onSetComplete
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
               <div className="border-t border-white/[0.06] px-4 pb-4 pt-3">
                 <div className="mb-2 grid grid-cols-[auto_1fr_1fr_auto] gap-2 text-[10px] font-medium uppercase tracking-wider text-[#6B6B8A]">
-                  <span className="w-8 text-center">Set</span><span>Reps</span><span>Weight (lbs)</span><span className="w-9 text-center">Done</span>
+                  <span className="w-8 text-center">Set</span><span>Reps</span><span>Weight (kg)</span><span className="w-9 text-center">Done</span>
                 </div>
                 {sets.map((set, si) => (
                   <div key={si} className="mb-1.5 grid grid-cols-[auto_1fr_1fr_auto] items-center gap-2">
@@ -270,7 +270,7 @@ function BuilderExerciseCard({ entry, index, onChange, onRemove }: {
             </div>
             <div>
               <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-[#6B6B8A]">Weight</label>
-              <Input type="number" inputMode="decimal" value={entry.weight ?? ''} onChange={(e) => onChange(index, { weight: parseFloat(e.target.value) || null })} className="h-8 text-center text-sm" placeholder="lbs" />
+              <Input type="number" inputMode="decimal" value={entry.weight ?? ''} onChange={(e) => onChange(index, { weight: parseFloat(e.target.value) || null })} className="h-8 text-center text-sm" placeholder="kg" />
             </div>
             <div>
               <label className="mb-1 block text-[10px] font-medium uppercase tracking-wider text-[#6B6B8A]">Rest</label>

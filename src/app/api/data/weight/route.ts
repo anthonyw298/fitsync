@@ -17,10 +17,10 @@ export async function POST(request: NextRequest) {
   const user = await getAuthUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { date, weight_lbs, notes } = await request.json();
-  if (!date || !weight_lbs) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  const { date, weight_kg, notes } = await request.json();
+  if (!date || !weight_kg) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
-  const data = await upsertWeightLog(user.userId, date, weight_lbs, notes || "");
+  const data = await upsertWeightLog(user.userId, date, weight_kg, notes || "");
   return NextResponse.json({ data });
 }
 

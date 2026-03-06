@@ -194,7 +194,7 @@ CREATE TABLE IF NOT EXISTS weight_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   date DATE NOT NULL,
-  weight_lbs NUMERIC NOT NULL,
+  weight_kg NUMERIC NOT NULL,
   notes TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(user_id, date)
@@ -220,5 +220,5 @@ CREATE TABLE IF NOT EXISTS daily_notes (
 ALTER TABLE food_entries ADD COLUMN IF NOT EXISTS number_of_servings NUMERIC NOT NULL DEFAULT 1;
 
 -- Add goal_weight_lbs and daily_water_ml to user_profiles
-ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS goal_weight_lbs NUMERIC;
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS goal_weight_kg NUMERIC;
 ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS daily_water_ml INTEGER NOT NULL DEFAULT 2500;

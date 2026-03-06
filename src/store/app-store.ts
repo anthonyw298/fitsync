@@ -76,7 +76,7 @@ interface AppState {
   weightLogs: WeightLog[]
   weightLoading: boolean
   fetchWeightLogs: () => Promise<void>
-  addWeightLog: (date: string, weightLbs: number, notes?: string) => Promise<void>
+  addWeightLog: (date: string, weightKg: number, notes?: string) => Promise<void>
   deleteWeightLog: (id: string) => Promise<void>
 
   // Workout
@@ -203,8 +203,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     const data = await api<WeightLog[]>('/api/data/weight?limit=90')
     set({ weightLogs: data ?? [], weightLoading: false })
   },
-  addWeightLog: async (date, weightLbs, notes) => {
-    const data = await apiPost<WeightLog>('/api/data/weight', { date, weight_lbs: weightLbs, notes: notes || '' })
+  addWeightLog: async (date, weightKg, notes) => {
+    const data = await apiPost<WeightLog>('/api/data/weight', { date, weight_kg: weightKg, notes: notes || '' })
     if (data) {
       const existing = get().weightLogs.filter((w) => w.date !== date)
       set({ weightLogs: [data, ...existing].sort((a, b) => b.date.localeCompare(a.date)) })
