@@ -1144,7 +1144,7 @@ function AddFoodModal({
 
       const json = await res.json()
 
-      if (json.success || json.data) {
+      if (json.success && json.data) {
         const data: AnalysisResult = json.data
         setAnalysisResult(data)
         // Populate form fields with results

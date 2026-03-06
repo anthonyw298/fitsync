@@ -181,58 +181,52 @@ export async function POST(request: NextRequest) {
     }
 
     const userPrompt = buildUserPrompt(hints);
+    const imageDataUrl = `data:${mimeType};base64,${base64Data}`;
 
-    // Try the 90b model first, fall back to 11b
+    // Models to try in order (Llama 4 vision-capable models on Groq)
+    const MODELS = [
+      "meta-llama/llama-4-scout-17b-16e-instruct",
+      "meta-llama/llama-4-maverick-17b-128e-instruct",
+    ];
+
     let result;
-    try {
-      result = await generateText({
-        model: groq("llama-3.2-90b-vision-preview"),
-        system: BASE_SYSTEM_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "image",
-                image: `data:${mimeType};base64,${base64Data}`,
-              },
-              {
-                type: "text",
-                text: userPrompt,
-              },
-            ],
-          },
-        ],
-        maxOutputTokens: 512,
-        temperature: 0.1,
-      });
-    } catch (primaryError) {
-      console.warn(
-        "90b vision model failed, falling back to 11b:",
-        primaryError instanceof Error ? primaryError.message : primaryError
-      );
+    let lastError: unknown;
 
-      result = await generateText({
-        model: groq("llama-3.2-11b-vision-preview"),
-        system: BASE_SYSTEM_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "image",
-                image: `data:${mimeType};base64,${base64Data}`,
-              },
-              {
-                type: "text",
-                text: userPrompt,
-              },
-            ],
-          },
-        ],
-        maxOutputTokens: 512,
-        temperature: 0.1,
-      });
+    for (const modelId of MODELS) {
+      try {
+        result = await generateText({
+          model: groq(modelId),
+          system: BASE_SYSTEM_PROMPT,
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "image",
+                  image: imageDataUrl,
+                },
+                {
+                  type: "text",
+                  text: userPrompt,
+                },
+              ],
+            },
+          ],
+          maxOutputTokens: 512,
+          temperature: 0.1,
+        });
+        break; // Success – stop trying models
+      } catch (err) {
+        lastError = err;
+        console.warn(
+          `Model ${modelId} failed:`,
+          err instanceof Error ? err.message : err
+        );
+      }
+    }
+
+    if (!result) {
+      throw lastError ?? new Error("All vision models failed");
     }
 
     const responseText = result.text;
@@ -241,7 +235,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: nutritionData,
-      model: result.response?.modelId ?? "llama-3.2-vision",
+      model: result.response?.modelId ?? MODELS[0],
     });
   } catch (error) {
     console.error("Food analysis error:", error);
