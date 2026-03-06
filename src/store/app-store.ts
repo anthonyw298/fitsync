@@ -16,6 +16,22 @@ import { getToday } from '@/lib/utils'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+/** Normalize a date string from Postgres (e.g. "2026-03-06T00:00:00.000Z") to "2026-03-06" */
+function normalizeDate(d: string): string {
+  if (!d) return d
+  return d.length > 10 ? d.slice(0, 10) : d
+}
+
+/** Normalize a SleepLog from the API (fix date format and numeric types) */
+function normalizeSleepLog(s: any): SleepLog {
+  return {
+    ...s,
+    date: normalizeDate(s.date),
+    duration_hours: typeof s.duration_hours === 'string' ? parseFloat(s.duration_hours) : s.duration_hours,
+    quality: typeof s.quality === 'string' ? parseInt(s.quality) : s.quality,
+  }
+}
+
 async function api<T>(url: string, options?: RequestInit): Promise<T | null> {
   try {
     const res = await fetch(url, options)
@@ -134,23 +150,26 @@ export const useAppStore = create<AppState>((set, get) => ({
   foodLoading: false,
   fetchTodayFood: async () => {
     set({ foodLoading: true })
-    const data = await api<FoodEntry[]>(`/api/data/food?date=${getToday()}`)
-    set({ todayFood: data ?? [], foodLoading: false })
+    const raw = await api<FoodEntry[]>(`/api/data/food?date=${getToday()}`)
+    const data = (raw ?? []).map((f) => ({ ...f, date: normalizeDate(f.date) }))
+    set({ todayFood: data, foodLoading: false })
   },
   fetchFoodByDate: async (date: string) => {
-    const data = await api<FoodEntry[]>(`/api/data/food?date=${date}`)
-    return data ?? []
+    const raw = await api<FoodEntry[]>(`/api/data/food?date=${date}`)
+    return (raw ?? []).map((f) => ({ ...f, date: normalizeDate(f.date) }))
   },
   addFoodEntry: async (entry) => {
-    const data = await apiPost<FoodEntry>('/api/data/food', entry)
-    if (data && entry.date === getToday()) {
+    const raw = await apiPost<FoodEntry>('/api/data/food', entry)
+    const data = raw ? { ...raw, date: normalizeDate(raw.date) } : null
+    if (data && data.date === getToday()) {
       set({ todayFood: [...get().todayFood, data] })
     }
     await apiPost('/api/data/streaks', { streakType: 'food', date: entry.date })
     await apiPost('/api/data/streaks', { streakType: 'overall', date: entry.date })
   },
   updateFoodEntry: async (id, updates) => {
-    const data = await apiPut<FoodEntry>(`/api/data/food?id=${id}`, updates)
+    const raw = await apiPut<FoodEntry>(`/api/data/food?id=${id}`, updates)
+    const data = raw ? { ...raw, date: normalizeDate(raw.date) } : null
     if (data) {
       set({ todayFood: get().todayFood.map((f) => (f.id === id ? data : f)) })
     }
@@ -178,15 +197,16 @@ export const useAppStore = create<AppState>((set, get) => ({
   waterLoading: false,
   fetchWaterByDate: async (date: string) => {
     set({ waterLoading: true })
-    const data = await api<WaterEntry[]>(`/api/data/water?date=${date}`)
-    const entries = data ?? []
+    const raw = await api<WaterEntry[]>(`/api/data/water?date=${date}`)
+    const entries = (raw ?? []).map((w) => ({ ...w, date: normalizeDate(w.date), amount_ml: typeof w.amount_ml === 'string' ? parseInt(w.amount_ml) : w.amount_ml }))
     if (date === getToday()) set({ todayWater: entries })
     set({ waterLoading: false })
     return entries
   },
   addWaterEntry: async (date, amountMl) => {
-    const data = await apiPost<WaterEntry>('/api/data/water', { date, amount_ml: amountMl })
-    if (data && date === getToday()) {
+    const raw = await apiPost<WaterEntry>('/api/data/water', { date, amount_ml: amountMl })
+    if (raw && date === getToday()) {
+      const data = { ...raw, date: normalizeDate(raw.date), amount_ml: typeof raw.amount_ml === 'string' ? parseInt(raw.amount_ml) : raw.amount_ml }
       set({ todayWater: [...get().todayWater, data] })
     }
   },
@@ -200,13 +220,15 @@ export const useAppStore = create<AppState>((set, get) => ({
   weightLoading: false,
   fetchWeightLogs: async () => {
     set({ weightLoading: true })
-    const data = await api<WeightLog[]>('/api/data/weight?limit=90')
-    set({ weightLogs: data ?? [], weightLoading: false })
+    const raw = await api<WeightLog[]>('/api/data/weight?limit=90')
+    const data = (raw ?? []).map((w) => ({ ...w, date: normalizeDate(w.date), weight_kg: typeof w.weight_kg === 'string' ? parseFloat(w.weight_kg) : w.weight_kg }))
+    set({ weightLogs: data, weightLoading: false })
   },
   addWeightLog: async (date, weightKg, notes) => {
-    const data = await apiPost<WeightLog>('/api/data/weight', { date, weight_kg: weightKg, notes: notes || '' })
-    if (data) {
-      const existing = get().weightLogs.filter((w) => w.date !== date)
+    const raw = await apiPost<WeightLog>('/api/data/weight', { date, weight_kg: weightKg, notes: notes || '' })
+    if (raw) {
+      const data = { ...raw, date: normalizeDate(raw.date), weight_kg: typeof raw.weight_kg === 'string' ? parseFloat(raw.weight_kg) : raw.weight_kg }
+      const existing = get().weightLogs.filter((w) => w.date !== data.date)
       set({ weightLogs: [data, ...existing].sort((a, b) => b.date.localeCompare(a.date)) })
     }
   },
@@ -244,13 +266,15 @@ export const useAppStore = create<AppState>((set, get) => ({
   sleepLoading: false,
   fetchRecentSleep: async () => {
     set({ sleepLoading: true })
-    const data = await api<SleepLog[]>('/api/data/sleep?limit=30')
-    set({ recentSleep: data ?? [], sleepLoading: false })
+    const raw = await api<SleepLog[]>('/api/data/sleep?limit=30')
+    const data = (raw ?? []).map(normalizeSleepLog)
+    set({ recentSleep: data, sleepLoading: false })
   },
   addSleepLog: async (log) => {
-    const data = await apiPost<SleepLog>('/api/data/sleep', log)
-    if (data) {
-      set({ recentSleep: [data, ...get().recentSleep.filter((s) => s.date !== (log as any).date)] })
+    const raw = await apiPost<SleepLog>('/api/data/sleep', log)
+    if (raw) {
+      const data = normalizeSleepLog(raw)
+      set({ recentSleep: [data, ...get().recentSleep.filter((s) => s.date !== data.date)] })
     }
     await apiPost('/api/data/streaks', { streakType: 'sleep', date: getToday() })
     await apiPost('/api/data/streaks', { streakType: 'overall', date: getToday() })
