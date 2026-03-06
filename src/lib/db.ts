@@ -328,6 +328,11 @@ export async function updateWorkoutLog(
   return (rows[0] as WorkoutLog) ?? null;
 }
 
+export async function deleteWorkoutLog(userId: string, id: string): Promise<void> {
+  const sql = getClient();
+  await sql`DELETE FROM workout_logs WHERE id = ${id} AND user_id = ${userId}`;
+}
+
 // ─── Sleep Logs ─────────────────────────────────────────────────────────────
 
 export async function getRecentSleep(userId: string, days: number = 30): Promise<SleepLog[]> {
@@ -356,6 +361,11 @@ export async function upsertSleepLog(
     RETURNING *
   `;
   return rows[0] as SleepLog;
+}
+
+export async function deleteSleepLog(userId: string, id: string): Promise<void> {
+  const sql = getClient();
+  await sql`DELETE FROM sleep_logs WHERE id = ${id} AND user_id = ${userId}`;
 }
 
 // ─── Supplements ────────────────────────────────────────────────────────────

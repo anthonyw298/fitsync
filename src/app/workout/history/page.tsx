@@ -10,6 +10,9 @@ import {
   ChevronUp,
   TrendingUp,
   Flame,
+  Trash2,
+  Check,
+  X,
 } from 'lucide-react'
 import {
   BarChart,
@@ -19,7 +22,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
-import { db } from '@/lib/local-db'
+import { useAppStore } from '@/store/app-store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import PageHeader from '@/components/layout/page-header'
@@ -66,8 +69,9 @@ function getLast7Days(): string[] {
 /*  History Entry Component                                           */
 /* ------------------------------------------------------------------ */
 
-function HistoryEntry({ log }: { log: WorkoutLog }) {
+function HistoryEntry({ log, onDelete }: { log: WorkoutLog; onDelete: (id: string) => void }) {
   const [expanded, setExpanded] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
   const volume = calculateVolume(log)
 
   return (
@@ -172,14 +176,44 @@ function HistoryEntry({ log }: { log: WorkoutLog }) {
                   <p className="mt-3 text-xs italic text-[#6B6B8A]">{log.notes}</p>
                 )}
 
-                <div className="mt-3 flex items-center gap-4 text-xs text-[#6B6B8A]">
-                  <span className="flex items-center gap-1">
-                    <Flame className="h-3 w-3 text-[#FBBF24]" />
-                    {log.calories_burned} cal
-                  </span>
-                  <Badge variant={log.completed ? 'success' : 'warning'}>
-                    {log.completed ? 'Complete' : 'Partial'}
-                  </Badge>
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-xs text-[#6B6B8A]">
+                    <span className="flex items-center gap-1">
+                      <Flame className="h-3 w-3 text-[#FBBF24]" />
+                      {log.calories_burned} cal
+                    </span>
+                    <Badge variant={log.completed ? 'success' : 'warning'}>
+                      {log.completed ? 'Complete' : 'Partial'}
+                    </Badge>
+                  </div>
+
+                  {/* Delete with confirmation */}
+                  {deleteConfirm ? (
+                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => onDelete(log.id)}
+                        className="rounded-md p-1.5 text-red-400 transition-colors hover:bg-red-500/15"
+                        aria-label="Confirm delete"
+                      >
+                        <Check className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirm(false)}
+                        className="rounded-md p-1.5 text-[#6B6B8A] transition-colors hover:bg-white/[0.06]"
+                        aria-label="Cancel delete"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDeleteConfirm(true) }}
+                      className="rounded-md p-1.5 text-[#6B6B8A] transition-colors hover:bg-red-500/10 hover:text-red-400"
+                      aria-label="Delete workout log"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -219,18 +253,25 @@ function ChartTooltip({
 /* ------------------------------------------------------------------ */
 
 export default function WorkoutHistoryPage() {
-  const [logs, setLogs] = useState<WorkoutLog[]>([])
+  const {
+    workoutLogs: logs,
+    fetchWorkoutLogs,
+    deleteWorkoutLog,
+  } = useAppStore()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchLogs() {
       setLoading(true)
-      const data = db.getRecentWorkouts(50) as unknown as WorkoutLog[]
-      setLogs(data ?? [])
+      await fetchWorkoutLogs(50)
       setLoading(false)
     }
     fetchLogs()
-  }, [])
+  }, [fetchWorkoutLogs])
+
+  const handleDelete = async (id: string) => {
+    await deleteWorkoutLog(id)
+  }
 
   // Build weekly volume chart data
   const last7 = getLast7Days()
@@ -360,7 +401,7 @@ export default function WorkoutHistoryPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
               >
-                <HistoryEntry log={log} />
+                <HistoryEntry log={log} onDelete={handleDelete} />
               </motion.div>
             ))
           )}

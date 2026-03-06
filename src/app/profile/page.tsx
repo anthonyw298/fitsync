@@ -18,6 +18,8 @@ import {
   Plus,
   Scale as ScaleIcon,
   Calendar,
+  Check,
+  X,
 } from 'lucide-react'
 import { useAppStore } from '@/store/app-store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -135,6 +137,7 @@ export default function ProfilePage() {
   const [newWeight, setNewWeight] = useState<number | ''>('')
   const [newNote, setNewNote] = useState('')
   const [loggingWeight, setLoggingWeight] = useState(false)
+  const [weightDeleteConfirm, setWeightDeleteConfirm] = useState<string | null>(null)
 
   /* ── UI state ──────────────────────────────────────────────────────────── */
   const [saving, setSaving] = useState(false)
@@ -163,7 +166,7 @@ export default function ProfilePage() {
     }
   }, [profile])
 
-  /* ── Live macro calculation (convert lbs→kg for BMR formula) ───────────── */
+  /* ── Live macro calculation ────────────────────────────────────────────── */
   const macros = useMemo(() => {
     if (!age || !heightIn || !weightKg) return null
     const weightKgActual = weightKg / 2.205
@@ -331,7 +334,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="rounded-xl bg-transparent p-3 border border-white/[0.06]">
                     <p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Weight</p>
-                    <p className="mt-0.5 text-lg font-bold text-[#EAEAF0] tabular-nums">{profile.weight_kg}<span className="text-xs font-normal text-[#6B6B8A] ml-0.5">lbs</span></p>
+                    <p className="mt-0.5 text-lg font-bold text-[#EAEAF0] tabular-nums">{profile.weight_kg}<span className="text-xs font-normal text-[#6B6B8A] ml-0.5">kg</span></p>
                   </div>
                   <div className="rounded-xl bg-transparent p-3 border border-white/[0.06]">
                     <p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Height</p>
@@ -376,7 +379,7 @@ export default function ProfilePage() {
               {/* Quick log form */}
               <div className="flex items-end gap-2">
                 <div className="flex-1">
-                  <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">Weight (lbs)</label>
+                  <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">Weight (kg)</label>
                   <input
                     type="number"
                     min={60}
@@ -441,7 +444,7 @@ export default function ProfilePage() {
                     <p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Current</p>
                     <p className="mt-0.5 text-lg font-bold text-[#EAEAF0] tabular-nums">
                       {weightStats.current}
-                      <span className="text-xs font-normal text-[#6B6B8A] ml-0.5">lbs</span>
+                      <span className="text-xs font-normal text-[#6B6B8A] ml-0.5">kg</span>
                     </p>
                   </div>
                   <div className="rounded-xl bg-transparent border border-white/[0.06] p-3 text-center">
@@ -450,14 +453,14 @@ export default function ProfilePage() {
                       weightStats.change < 0 ? 'text-[#34D399]' : weightStats.change > 0 ? 'text-[#F87171]' : 'text-[#EAEAF0]'
                     }`}>
                       {weightStats.change > 0 ? '+' : ''}{weightStats.change}
-                      <span className="text-xs font-normal text-[#6B6B8A] ml-0.5">lbs</span>
+                      <span className="text-xs font-normal text-[#6B6B8A] ml-0.5">kg</span>
                     </p>
                   </div>
                   <div className="rounded-xl bg-transparent border border-white/[0.06] p-3 text-center">
                     <p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Goal</p>
                     <p className="mt-0.5 text-lg font-bold text-[#A78BFA] tabular-nums">
                       {weightStats.goal ? (
-                        <>{weightStats.goal}<span className="text-xs font-normal text-[#6B6B8A] ml-0.5">lbs</span></>
+                        <>{weightStats.goal}<span className="text-xs font-normal text-[#6B6B8A] ml-0.5">kg</span></>
                       ) : (
                         <span className="text-sm text-[#6B6B8A]">--</span>
                       )}
@@ -486,7 +489,7 @@ export default function ProfilePage() {
                             })}
                           </span>
                           <span className="text-sm font-semibold text-[#EAEAF0] tabular-nums">
-                            {log.weight_kg} lbs
+                            {log.weight_kg} kg
                           </span>
                           {log.notes && (
                             <span className="text-xs text-[#6B6B8A] italic truncate max-w-[80px]">
@@ -494,13 +497,32 @@ export default function ProfilePage() {
                             </span>
                           )}
                         </div>
-                        <button
-                          onClick={() => deleteWeightLog(log.id)}
-                          className="rounded-lg p-1.5 text-[#6B6B8A] hover:bg-red-500/10 hover:text-red-400 transition-colors"
-                          aria-label="Delete weight log"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        {weightDeleteConfirm === log.id ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => { deleteWeightLog(log.id); setWeightDeleteConfirm(null) }}
+                              className="rounded-md p-1.5 text-red-400 transition-colors hover:bg-red-500/15"
+                              aria-label="Confirm delete"
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setWeightDeleteConfirm(null)}
+                              className="rounded-md p-1.5 text-[#6B6B8A] transition-colors hover:bg-white/[0.06]"
+                              aria-label="Cancel delete"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setWeightDeleteConfirm(log.id)}
+                            className="rounded-lg p-1.5 text-[#6B6B8A] hover:bg-red-500/10 hover:text-red-400 transition-colors"
+                            aria-label="Delete weight log"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -571,7 +593,7 @@ export default function ProfilePage() {
                   <Weight className="h-5 w-5 text-[#6B6B8A]" />
                 </div>
                 <Input
-                  label="Weight (lbs)"
+                  label="Weight (kg)"
                   type="number"
                   min={60}
                   max={700}
@@ -695,7 +717,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="w-full">
                   <Input
-                    label="Goal Weight (lbs)"
+                    label="Goal Weight (kg)"
                     type="number"
                     min={60}
                     max={700}

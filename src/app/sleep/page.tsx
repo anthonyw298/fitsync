@@ -10,6 +10,9 @@ import {
   TrendingUp,
   Clock,
   BedDouble,
+  Trash2,
+  Check,
+  X,
 } from 'lucide-react'
 import {
   LineChart,
@@ -166,6 +169,7 @@ export default function SleepPage() {
     sleepLoading,
     fetchRecentSleep,
     addSleepLog,
+    deleteSleepLog,
   } = useAppStore()
 
   // Form state
@@ -175,6 +179,7 @@ export default function SleepPage() {
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchRecentSleep()
@@ -720,6 +725,98 @@ export default function SleepPage() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* ============================================================ */}
+        {/*  Recent Sleep Logs (with delete)                             */}
+        {/* ============================================================ */}
+        {recentSleep.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Moon className="h-4 w-4 text-[#A78BFA]" />
+                  Sleep Logs
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-1.5">
+                {recentSleep.map((log) => (
+                  <div
+                    key={log.id}
+                    className="group flex items-center justify-between rounded-lg border border-white/[0.06] bg-transparent px-3 py-2.5"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex h-8 w-8 items-center justify-center rounded-lg"
+                        style={{ backgroundColor: `${qualityColor(log.quality)}15` }}
+                      >
+                        <BedDouble
+                          className="h-4 w-4"
+                          style={{ color: qualityColor(log.quality) }}
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-[#EAEAF0]">
+                            {formatHours(log.duration_hours)}
+                          </span>
+                          <StarRating value={log.quality} readOnly size="sm" />
+                        </div>
+                        <div className="flex items-center gap-3 text-[10px] text-[#6B6B8A]">
+                          <span>
+                            {format(new Date(log.date + 'T00:00:00'), 'MMM d, yyyy')}
+                          </span>
+                          <span className="flex items-center gap-0.5">
+                            <Moon className="h-2.5 w-2.5" /> {log.bedtime}
+                          </span>
+                          <span className="flex items-center gap-0.5">
+                            <Sun className="h-2.5 w-2.5" /> {log.wake_time}
+                          </span>
+                        </div>
+                        {log.notes && (
+                          <span className="text-[10px] italic text-[#6B6B8A] mt-0.5 truncate max-w-[200px]">
+                            {log.notes}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Delete with confirmation */}
+                    {deleteConfirmId === log.id ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => { deleteSleepLog(log.id); setDeleteConfirmId(null) }}
+                          className="rounded-md p-1.5 text-red-400 transition-colors hover:bg-red-500/15"
+                          aria-label="Confirm delete"
+                        >
+                          <Check className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmId(null)}
+                          className="rounded-md p-1.5 text-[#6B6B8A] transition-colors hover:bg-white/[0.06]"
+                          aria-label="Cancel delete"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setDeleteConfirmId(log.id)}
+                        className="rounded-md p-1.5 text-[#6B6B8A] transition-colors hover:bg-red-500/10 hover:text-red-400"
+                        aria-label="Delete sleep log"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
       </div>
     </div>
   )

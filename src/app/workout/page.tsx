@@ -475,18 +475,67 @@ export default function WorkoutPage() {
 
   /* ── Completed today ── */
   if (todayWorkout?.completed) {
+    const completedVolume = todayWorkout.exercises.reduce((total, ex) =>
+      total + ex.sets.reduce((sum, s) => sum + (s.completed ? s.reps * s.weight : 0), 0), 0)
+
     return (
-      <div className="min-h-screen bg-transparent">
+      <div className="min-h-screen bg-transparent pb-28">
         <PageHeader title="Workout" subtitle="Today" rightAction={<Link href="/workout/history" className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.06] text-[#6B6B8A] hover:text-[#EAEAF0] transition-colors"><Clock className="h-5 w-5" /></Link>} />
-        <div className="flex flex-col items-center gap-4 px-4 pt-20">
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex h-20 w-20 items-center justify-center rounded-full bg-[#34D399]/15"><Check className="h-10 w-10 text-[#34D399]" /></motion.div>
-          <h2 className="text-xl font-semibold text-[#EAEAF0]">Workout Complete!</h2>
-          <p className="text-sm text-[#6B6B8A]">{todayWorkout.workout_name} — {todayWorkout.duration_minutes} min</p>
-          <div className="mt-2 flex gap-4">
-            <div className="text-center"><p className="text-lg font-bold text-[#A78BFA]">{todayWorkout.exercises.length}</p><p className="text-xs text-[#6B6B8A]">Exercises</p></div>
-            <div className="text-center"><p className="text-lg font-bold text-[#38BDF8]">{todayWorkout.calories_burned}</p><p className="text-xs text-[#6B6B8A]">Calories</p></div>
-            <div className="text-center"><p className="text-lg font-bold text-[#34D399]">{todayWorkout.duration_minutes}m</p><p className="text-xs text-[#6B6B8A]">Duration</p></div>
-          </div>
+        <div className="flex flex-col gap-4 px-4 pt-6">
+          {/* Header */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center gap-3">
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex h-20 w-20 items-center justify-center rounded-full bg-[#34D399]/15"><Check className="h-10 w-10 text-[#34D399]" /></motion.div>
+            <h2 className="text-xl font-semibold text-[#EAEAF0]">Workout Complete!</h2>
+            <p className="text-sm text-[#6B6B8A]">{todayWorkout.workout_name} — {todayWorkout.duration_minutes} min</p>
+          </motion.div>
+
+          {/* Stats grid */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <Card>
+              <CardContent>
+                <div className="grid grid-cols-4 gap-3 text-center">
+                  <div><p className="text-lg font-bold text-[#A78BFA] tabular-nums">{todayWorkout.exercises.length}</p><p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Exercises</p></div>
+                  <div><p className="text-lg font-bold text-[#38BDF8] tabular-nums">{todayWorkout.calories_burned}</p><p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Calories</p></div>
+                  <div><p className="text-lg font-bold text-[#34D399] tabular-nums">{todayWorkout.duration_minutes}m</p><p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Duration</p></div>
+                  <div><p className="text-lg font-bold text-[#FBBF24] tabular-nums">{completedVolume.toLocaleString()}</p><p className="text-[10px] uppercase tracking-wider text-[#6B6B8A]">Volume (kg)</p></div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Exercise details */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <div className="flex flex-col gap-2">
+              <h3 className="px-1 text-sm font-semibold text-[#EAEAF0]">Exercise Details</h3>
+              {todayWorkout.exercises.map((ex, i) => {
+                const completedSets = ex.sets.filter((s) => s.completed)
+                const exVolume = completedSets.reduce((sum, s) => sum + s.reps * s.weight, 0)
+                return (
+                  <Card key={`completed-ex-${i}`}>
+                    <CardContent className="p-3.5">
+                      <div className="flex items-start justify-between">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-sm font-medium text-[#EAEAF0]">{ex.name}</span>
+                          <span className="text-[10px] text-[#6B6B8A]">{completedSets.length} sets completed</span>
+                        </div>
+                        <span className="text-xs font-semibold tabular-nums text-[#A78BFA]">{exVolume.toLocaleString()} kg</span>
+                      </div>
+                      {completedSets.length > 0 && (
+                        <div className="mt-2 flex flex-col gap-1">
+                          {completedSets.map((s, si) => (
+                            <div key={`set-detail-${si}`} className="flex items-center justify-between rounded-md bg-white/[0.02] px-2.5 py-1.5">
+                              <span className="text-[11px] text-[#6B6B8A]">Set {si + 1}</span>
+                              <span className="text-[11px] font-medium tabular-nums text-[#EAEAF0]">{s.reps} reps x {s.weight} kg</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          </motion.div>
         </div>
       </div>
     )

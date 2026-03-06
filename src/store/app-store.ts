@@ -103,12 +103,16 @@ interface AppState {
   fetchTodayWorkout: () => Promise<void>
   addWorkoutLog: (log: Omit<WorkoutLog, 'id' | 'user_id' | 'created_at'>) => Promise<void>
   updateWorkoutLog: (id: string, data: Partial<WorkoutLog>) => Promise<void>
+  deleteWorkoutLog: (id: string) => Promise<void>
+  workoutLogs: WorkoutLog[]
+  fetchWorkoutLogs: (limit?: number) => Promise<void>
 
   // Sleep
   recentSleep: SleepLog[]
   sleepLoading: boolean
   fetchRecentSleep: () => Promise<void>
   addSleepLog: (log: Omit<SleepLog, 'id' | 'user_id' | 'created_at'>) => Promise<void>
+  deleteSleepLog: (id: string) => Promise<void>
 
   // Supplements
   supplements: Supplement[]
@@ -260,6 +264,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     const data = await apiPut<WorkoutLog>(`/api/data/workout/logs?id=${id}`, updates)
     if (data) set({ todayWorkout: data })
   },
+  deleteWorkoutLog: async (id) => {
+    await fetch(`/api/data/workout/logs?id=${id}`, { method: 'DELETE' })
+    set((s) => ({
+      workoutLogs: s.workoutLogs.filter((l) => l.id !== id),
+      todayWorkout: s.todayWorkout?.id === id ? null : s.todayWorkout,
+    }))
+  },
+  workoutLogs: [],
+  fetchWorkoutLogs: async (limit = 50) => {
+    const data = await api<WorkoutLog[]>(`/api/data/workout/logs?limit=${limit}`)
+    set({ workoutLogs: data ?? [] })
+  },
 
   // Sleep
   recentSleep: [],
@@ -278,6 +294,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
     await apiPost('/api/data/streaks', { streakType: 'sleep', date: getToday() })
     await apiPost('/api/data/streaks', { streakType: 'overall', date: getToday() })
+  },
+  deleteSleepLog: async (id) => {
+    await fetch(`/api/data/sleep?id=${id}`, { method: 'DELETE' })
+    set((s) => ({ recentSleep: s.recentSleep.filter((l) => l.id !== id) }))
   },
 
   // Supplements
