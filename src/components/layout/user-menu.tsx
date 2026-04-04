@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { User, LogOut, Settings, ChevronDown } from 'lucide-react'
+import { Settings, ChevronDown } from 'lucide-react'
 
 interface AuthUser {
   userId: string
@@ -12,10 +11,8 @@ interface AuthUser {
 }
 
 export default function UserMenu() {
-  const router = useRouter()
   const [user, setUser] = useState<AuthUser | null>(null)
   const [open, setOpen] = useState(false)
-  const [loggingOut, setLoggingOut] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -37,16 +34,6 @@ export default function UserMenu() {
     if (open) document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
-
-  const handleLogout = async () => {
-    setLoggingOut(true)
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' })
-      router.push('/login')
-    } catch {
-      setLoggingOut(false)
-    }
-  }
 
   if (!user) return null
 
@@ -105,15 +92,6 @@ export default function UserMenu() {
                 <Settings className="h-4 w-4 text-[#6B6B8A]" />
                 Profile & Settings
               </Link>
-
-              <button
-                onClick={handleLogout}
-                disabled={loggingOut}
-                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-400 transition-colors hover:bg-red-500/[0.06] disabled:opacity-50"
-              >
-                <LogOut className="h-4 w-4" />
-                {loggingOut ? 'Signing out...' : 'Sign Out'}
-              </button>
             </div>
           </motion.div>
         )}

@@ -64,16 +64,25 @@ export async function removeAuthCookie(): Promise<void> {
   cookieStore.delete(COOKIE_NAME);
 }
 
-// ─── Get authenticated user from cookie ─────────────────────────────────────
+// ─── Get authenticated user ──────────────────────────────────────────────────
+// Login removed – always return a default user so API routes keep working.
+
+const DEFAULT_USER_ID = process.env.DEFAULT_USER_ID || "default";
+const DEFAULT_USER_EMAIL = process.env.DEFAULT_USER_EMAIL || "user@fitsync.app";
 
 export async function getAuthUser(): Promise<{
   userId: string;
   email: string;
-} | null> {
+}> {
+  // Try cookie first (existing sessions still work)
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  if (!token) return null;
-  return verifyToken(token);
+  if (token) {
+    const user = await verifyToken(token);
+    if (user) return user;
+  }
+  // Fall back to default user
+  return { userId: DEFAULT_USER_ID, email: DEFAULT_USER_EMAIL };
 }
 
 // ─── Seed default streaks & achievements for a new user ─────────────────────

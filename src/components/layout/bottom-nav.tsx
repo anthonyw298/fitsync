@@ -42,8 +42,6 @@ export default function BottomNav() {
     return () => observer.disconnect();
   }, []);
 
-  // Hide nav on login/signup page
-  if (pathname === "/login") return null;
   if (hidden) return null;
 
   return (
